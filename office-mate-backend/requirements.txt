@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+pydantic
+pytesseract
+Pillow
+PyPDF2
+scikit-learn
+joblib
