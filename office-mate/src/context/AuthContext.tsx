@@ -24,7 +24,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error(
+    "VITE_API_URL environment variable is not set. Please create a .env.local file with VITE_API_URL=http://localhost:5000"
+  );
+}
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,

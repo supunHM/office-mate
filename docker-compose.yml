@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./office-mate-backend
+      dockerfile: Dockerfile
+    ports:
+      - "5001:10000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/officemate
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://localhost:8080
+      - MAX_UPLOAD_SIZE=10485760
+      - FLASK_ENV=development
+      - PORT=10000
+    volumes:
+      - ./office-mate-backend:/app
+      - backend-data:/app/data
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=officemate
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./office-mate
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:5001
+    volumes:
+      - ./office-mate:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  backend-data:

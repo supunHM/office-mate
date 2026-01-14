@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Backend Server",
+			"type": "shell",
+			"command": "cd office-mate-backend && python flask_app.py",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
