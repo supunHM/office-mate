@@ -7,6 +7,7 @@ from flask_cors import CORS
 from flask_models import db, init_db
 from flask_documents_api import documents_bp
 from flask_auth import auth_bp
+from flask_tasks_api import tasks_bp
 
 # Create Flask app
 app = Flask(__name__)
@@ -26,6 +27,7 @@ init_db(app)
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(documents_bp)
+app.register_blueprint(tasks_bp)
 
 # Health check endpoint
 @app.route('/')

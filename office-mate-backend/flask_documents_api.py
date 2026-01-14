@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 from flask import Blueprint, request, jsonify
 from flask_models import db, Document, Tag
+from flask_auth import get_current_user
 import PyPDF2
 from PIL import Image
 import pytesseract
@@ -79,11 +80,80 @@ def extract_text_from_image(file_bytes):
         return ""
 
 
+def detect_actual_file_type(file_bytes, filename):
+    """
+    Detect the actual file type by inspecting file content
+    Returns: tuple (actual_type, confidence)
+    """
+    if len(file_bytes) < 4:
+        return 'empty', 'high'
+    
+    # Check file signatures (magic numbers)
+    if file_bytes[:4] == b'PK\x03\x04' or file_bytes[:2] == b'PK':
+        return 'zip_based', 'high'  # Could be docx, xlsx, etc
+    elif file_bytes[:4] == b'%PDF':
+        return 'pdf', 'high'
+    elif file_bytes[:2] == b'\xff\xd8':
+        return 'jpeg', 'high'
+    elif file_bytes[:8] == b'\x89PNG\r\n\x1a\n':
+        return 'png', 'high'
+    elif file_bytes[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1':
+        return 'doc_old', 'high'  # Old .doc format (OLE2)
+    
+    # Try to decode as UTF-8 text
+    try:
+        text = file_bytes.decode('utf-8')
+        # Check if it's mostly printable
+        printable_ratio = sum(c.isprintable() or c in '\n\r\t' for c in text) / len(text)
+        if printable_ratio > 0.9:
+            return 'text_utf8', 'high'
+    except UnicodeDecodeError:
+        pass
+    
+    # Try Latin-1 (common for old files)
+    try:
+        text = file_bytes.decode('latin-1', errors='ignore')
+        printable_ratio = sum(c.isprintable() or c in '\n\r\t' for c in text) / max(len(text), 1)
+        if printable_ratio > 0.7:
+            return 'text_latin1', 'medium'
+    except:
+        pass
+    
+    return 'unknown', 'none'
+
+
 def extract_text_from_file(file):
     """Extract text from uploaded file based on type"""
     filename = file.filename.lower()
+    
+    # Read file content and reset pointer
+    file.seek(0)  # Ensure we're at the start
     file_bytes = file.read()
-    file.seek(0)  # Reset file pointer
+    file.seek(0)  # Reset for later reads
+    
+    print(f"File size: {len(file_bytes)} bytes")
+    
+    # Check if file is actually empty
+    if len(file_bytes) == 0:
+        print("Error: File is empty (0 bytes)")
+        return ""
+    
+    # Detect actual file type
+    actual_type, confidence = detect_actual_file_type(file_bytes, filename)
+    print(f"File type detection: {actual_type} (confidence: {confidence})")
+    
+    # Handle mismatched file types
+    if filename.endswith('.docx') and actual_type == 'text':
+        print("Warning: File has .docx extension but is actually plain text")
+        try:
+            text_content = file_bytes.decode('utf-8', errors='ignore')
+            return text_content
+        except:
+            pass
+    
+    if filename.endswith('.docx') and actual_type == 'doc_old':
+        print("Warning: File has .docx extension but is old .doc format")
+        return ""  # Cannot process without antiword or other converter
     
     # Try PDF extraction
     if filename.endswith('.pdf'):
@@ -103,13 +173,57 @@ def extract_text_from_file(file):
     
     # Word documents (basic support)
     elif filename.endswith('.docx'):
+        # First check if it's actually a valid DOCX (ZIP-based)
+        if actual_type != 'zip_based':
+            print(f"File has .docx extension but is actually: {actual_type}")
+            
+            # Try as plain text
+            if actual_type in ('text', 'text_lossy'):
+                try:
+                    text_content = file_bytes.decode('utf-8', errors='ignore')
+                    if text_content and len(text_content.strip()) > 50:
+                        print("Successfully extracted as plain text")
+                        return text_content
+                except Exception as e:
+                    print(f"Text extraction failed: {e}")
+            
+            print("Cannot process: File is not a valid .docx format")
+            print("Suggestion: Open in Word and save as 'Word Document (.docx)'")
+            return ""
+        
+        # It's a valid ZIP-based file, try to extract as DOCX
         try:
             import docx
             doc = docx.Document(io.BytesIO(file_bytes))
-            return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
-        except Exception as e:
-            print(f"DOCX extraction error: {e}")
+            text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+            if text and text.strip():
+                print(f"DOCX extraction successful: {len(text)} characters")
+                return text
+            print("DOCX file has no text content in paragraphs")
             return ""
+        except Exception as e:
+            error_type = type(e).__name__
+            print(f"DOCX extraction error ({error_type}): {e}")
+            return ""
+    
+    # Older .doc format (not supported, need additional library)
+    elif filename.endswith('.doc'):
+        if actual_type == 'doc_old':
+            print("Error: Old .doc format not supported")
+            print("Please open in Word and save as .docx format")
+        else:
+            print(f"File has .doc extension but is actually: {actual_type}")
+        return ""
+    
+    # Fallback: try as plain text for any unknown format
+    if actual_type in ('text', 'text_lossy'):
+        try:
+            text_content = file_bytes.decode('utf-8', errors='ignore')
+            if text_content and len(text_content.strip()) > 50:
+                print(f"Fallback: Extracted as plain text ({len(text_content)} chars)")
+                return text_content
+        except:
+            pass
     
     return ""
 
@@ -263,9 +377,10 @@ def upload_document():
     if not allowed_file(file.filename):
         return jsonify({'error': 'File type not allowed'}), 400
     
-    # Get user_id from request (you should get this from authentication)
-    # For now, using a default user_id or from form data
-    user_id = request.form.get('user_id', 1)  # Replace with actual auth
+    # Get authenticated user
+    user_id = get_current_user()
+    if not user_id:
+        return jsonify({'error': 'Authentication required'}), 401
     
     try:
         # Secure filename
@@ -288,7 +403,28 @@ def upload_document():
         extracted_text = extract_text_from_file(file)
         
         if not extracted_text or len(extracted_text.strip()) < 10:
-            return jsonify({'error': 'Could not extract text from document'}), 400
+            error_msg = 'Could not extract text from document. '
+            
+            # Detect file type for better error message
+            file.seek(0)
+            file_bytes = file.read()
+            actual_type, _ = detect_actual_file_type(file_bytes, original_filename)
+            
+            if original_filename.lower().endswith('.doc'):
+                error_msg += 'Old .doc format is not supported. Please open in Microsoft Word and Save As → Word Document (.docx).'
+            elif original_filename.lower().endswith('.docx'):
+                if actual_type == 'text':
+                    error_msg += 'File appears to be plain text with .docx extension. Please save as actual .docx in Word.'
+                elif actual_type == 'doc_old':
+                    error_msg += 'File is in old .doc format with .docx extension. Open in Word and resave as .docx.'
+                else:
+                    error_msg += 'File may be corrupted. Try: 1) Open in Word 2) Select All & Copy 3) New document 4) Paste 5) Save as .docx'
+            elif original_filename.lower().endswith('.pdf'):
+                error_msg += 'PDF has no extractable text. Try a PDF with selectable text or better quality for OCR.'
+            else:
+                error_msg += 'File format not recognized or has no readable text content.'
+            
+            return jsonify({'error': error_msg}), 400
         
         # Step 2: Preprocess text with spaCy
         print("Preprocessing text with spaCy...")
@@ -362,7 +498,11 @@ def get_documents():
         end_date = request.args.get('end_date', '').strip()
         page = int(request.args.get('page', 1))
         per_page = min(int(request.args.get('per_page', 20)), 100)
-        user_id = request.args.get('user_id', 1)  # Replace with actual auth
+        
+        # Get authenticated user
+        user_id = get_current_user()
+        if not user_id:
+            return jsonify({'error': 'Authentication required'}), 401
         
         # Start building query
         query = Document.query.filter_by(user_id=user_id)
@@ -451,7 +591,15 @@ def get_documents():
 @documents_bp.route('/api/documents/<int:document_id>', methods=['GET'])
 def get_document(document_id):
     """Get a specific document"""
-    document = Document.query.get_or_404(document_id)
+    # Get authenticated user
+    user_id = get_current_user()
+    if not user_id:
+        return jsonify({'error': 'Authentication required'}), 401
+    
+    # Get document and verify ownership
+    document = Document.query.filter_by(id=document_id, user_id=user_id).first()
+    if not document:
+        return jsonify({'error': 'Document not found'}), 404
     
     return jsonify({
         'id': document.id,
@@ -462,3 +610,70 @@ def get_document(document_id):
         'summary': generate_summary(document.text),
         'created_at': document.created_at.isoformat()
     }), 200
+
+
+# Debug endpoint to test file extraction
+@documents_bp.route('/api/documents/test-extract', methods=['POST'])
+def test_extract():
+    """
+    Test endpoint to extract text from file without saving
+    Returns detailed extraction info for debugging
+    """
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    try:
+        import magic
+        has_magic = True
+    except:
+        has_magic = False
+    
+    # Get file info
+    filename = file.filename
+    file_bytes = file.read()
+    file.seek(0)
+    
+    result = {
+        'filename': filename,
+        'size_bytes': len(file_bytes),
+        'size_kb': round(len(file_bytes) / 1024, 2),
+        'allowed': allowed_file(filename)
+    }
+    
+    # Detect actual file type
+    actual_type, confidence = detect_actual_file_type(file_bytes, filename)
+    result['detected_type'] = actual_type
+    result['detection_confidence'] = confidence
+    
+    # Show first bytes (hex) for debugging
+    result['file_signature'] = ' '.join(f'{b:02x}' for b in file_bytes[:16])
+    
+    # Try to detect file type
+    if has_magic:
+        try:
+            mime = magic.Magic(mime=True)
+            result['mime_type'] = mime.from_buffer(file_bytes)
+        except:
+            result['mime_type'] = 'unknown'
+    
+    # Try extraction
+    try:
+        extracted_text = extract_text_from_file(file)
+        result['extraction_success'] = bool(extracted_text and len(extracted_text.strip()) >= 10)
+        result['text_length'] = len(extracted_text) if extracted_text else 0
+        result['text_preview'] = extracted_text[:200] if extracted_text else None
+        
+        if not extracted_text or len(extracted_text.strip()) < 10:
+            result['error'] = 'No text extracted or text too short'
+            result['suggestion'] = 'Check file format and ensure it contains readable text'
+    except Exception as e:
+        result['extraction_success'] = False
+        result['error'] = str(e)
+        result['error_type'] = type(e).__name__
+    
+    return jsonify(result), 200

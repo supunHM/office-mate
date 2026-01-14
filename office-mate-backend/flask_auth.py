@@ -78,6 +78,34 @@ def token_required(f):
     return decorated
 
 
+def get_current_user():
+    """
+    Helper function to get current user ID from request headers
+    Returns user_id if authenticated, None otherwise
+    Used by document and task endpoints
+    """
+    token = None
+    
+    # Get token from Authorization header
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        try:
+            # Format: "Bearer <token>"
+            token = auth_header.split(' ')[1]
+        except IndexError:
+            return None
+    
+    if not token:
+        return None
+    
+    # Verify token
+    payload = verify_token(token)
+    if not payload:
+        return None
+    
+    return payload.get('user_id')
+
+
 @auth_bp.route('/api/auth/register', methods=['POST'])
 def register():
     """
@@ -212,7 +240,7 @@ def login():
 
 @auth_bp.route('/api/auth/me', methods=['GET'])
 @token_required
-def get_current_user(current_user):
+def get_current_user_info(current_user):
     """
     Get current user info
     Requires: Authorization header with Bearer token

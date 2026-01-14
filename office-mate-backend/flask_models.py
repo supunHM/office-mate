@@ -77,16 +77,22 @@ class Document(db.Model):
 class Task(db.Model):
     """Task model for to-do management"""
     __tablename__ = 'tasks'
+    __table_args__ = (
+        # Composite index for user + status filtering
+        db.Index('idx_task_user_status', 'user_id', 'status'),
+        # Composite index for user + due date
+        db.Index('idx_task_user_due', 'user_id', 'due_date'),
+    )
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, default='')
     priority = db.Column(db.String(20), default='Low')  # Low, Medium, High, Urgent
-    due_date = db.Column(db.Date)
-    status = db.Column(db.String(20), default='Todo')  # Todo, InProgress, Done
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    due_date = db.Column(db.Date, index=True)
+    status = db.Column(db.String(20), default='Todo', index=True)  # Todo, InProgress, Done
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=True, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     
     def __repr__(self):
         return f'<Task {self.title}>'

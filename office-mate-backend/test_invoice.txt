@@ -1,0 +1,15 @@
+This is an invoice for office supplies.
+
+Invoice Number: INV-2024-001
+Date: January 14, 2026
+
+Items:
+- Paper supplies: $150
+- Printer cartridges: $200
+- Office furniture: $500
+
+Total Amount: $850
+
+Payment due: February 14, 2026
+
+Please process payment to our account.
