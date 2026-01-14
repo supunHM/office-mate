@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
@@ -6,14 +6,15 @@ import {
   Clock, 
   TrendingUp,
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockDocuments, mockTasks } from '@/services/api';
+import { documentsApi, tasksApi, Document, Task } from '@/services/api';
 import { format, isAfter, parseISO, addDays } from 'date-fns';
 
 const Dashboard: React.FC = () => {
@@ -21,10 +22,34 @@ const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [docsData, tasksData] = await Promise.all([
+          documentsApi.getAll(),
+          tasksApi.getAll()
+        ]);
+        setDocuments(docsData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   // Calculate stats
-  const totalDocs = mockDocuments.length;
-  const openTasks = mockTasks.filter(t => t.status !== 'completed').length;
-  const upcomingDeadlines = mockTasks.filter(t => {
+  const totalDocs = documents.length;
+  const openTasks = tasks.filter(t => t.status !== 'completed').length;
+  const upcomingDeadlines = tasks.filter(t => {
     if (!t.dueDate || t.status === 'completed') return false;
     const due = parseISO(t.dueDate);
     return isAfter(due, new Date()) && isAfter(addDays(new Date(), 7), due);
@@ -32,10 +57,10 @@ const Dashboard: React.FC = () => {
 
   // Category counts
   const categoryStats = {
-    Finance: mockDocuments.filter(d => d.category === 'Finance').length,
-    HR: mockDocuments.filter(d => d.category === 'HR').length,
-    Procurement: mockDocuments.filter(d => d.category === 'Procurement').length,
-    Maintenance: mockDocuments.filter(d => d.category === 'Maintenance').length,
+    Finance: documents.filter(d => d.category === 'Finance').length,
+    HR: documents.filter(d => d.category === 'HR').length,
+    Procurement: documents.filter(d => d.category === 'Procurement').length,
+    Maintenance: documents.filter(d => d.category === 'Maintenance').length,
   };
 
   const categoryColors = {
@@ -76,10 +101,18 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  const recentDocs = mockDocuments.slice(0, 5);
-  const urgentTasks = mockTasks
+  const recentDocs = documents.slice(0, 5);
+  const urgentTasks = tasks
     .filter(t => t.status !== 'completed' && t.priority === 'high')
     .slice(0, 3);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">

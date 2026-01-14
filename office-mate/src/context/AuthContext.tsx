@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 
 interface User {
   id: string;
@@ -17,13 +18,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user for demo purposes
-const MOCK_USER: User = {
-  id: '1',
-  name: 'Kasun Perera',
-  email: 'kasun@office.lk',
-  role: 'Admin',
-};
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -32,7 +27,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Check for existing session
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    const token = localStorage.getItem('authToken');
+    if (savedUser && token) {
       setUser(JSON.parse(savedUser));
     }
     setIsLoading(false);
@@ -41,16 +37,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock validation (any email/password works for demo)
-    if (email && password.length >= 4) {
-      const userData = { ...MOCK_USER, email };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setIsLoading(false);
-      return true;
+    try {
+      // Call Flask login endpoint (send email as username)
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        username: email, // Flask backend uses username field, but we send email
+        password
+      });
+      
+      if (response.data.access_token) {
+        const token = response.data.access_token;
+        const userData = {
+          id: response.data.user.id.toString(),
+          name: response.data.user.full_name || response.data.user.username,
+          email: response.data.user.email,
+          role: 'User'
+        };
+        
+        // Store token and user data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        setIsLoading(false);
+        return true;
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
     }
     
     setIsLoading(false);
@@ -60,6 +71,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
   };
 
   return (

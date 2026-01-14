@@ -185,39 +185,41 @@ def register():
 @auth_bp.route('/api/auth/login', methods=['POST'])
 def login():
     """
-    Login user
+    Login user - accepts username OR email
     Accepts both JSON and form-data
     JSON Body:
     {
-      "username": "string",
+      "username": "string", // can be username or email
       "password": "string"
     }
     OR Form Data:
-    - username: string
+    - username: string (can be username or email)
     - password: string
     """
     try:
         # Accept both JSON and form-data
         if request.is_json:
             data = request.get_json()
-            username = data.get('username', '').strip()
+            username_or_email = data.get('username', '').strip()
             password = data.get('password', '')
         else:
             # Form data
-            username = request.form.get('username', '').strip()
+            username_or_email = request.form.get('username', '').strip()
             password = request.form.get('password', '')
         
         # Validation
-        if not username:
-            return jsonify({'error': 'Username is required'}), 400
+        if not username_or_email:
+            return jsonify({'error': 'Username or email is required'}), 400
         if not password:
             return jsonify({'error': 'Password is required'}), 400
         
-        # Find user
-        user = User.query.filter_by(username=username).first()
+        # Find user by username OR email
+        user = User.query.filter(
+            (User.username == username_or_email) | (User.email == username_or_email)
+        ).first()
         
         if not user or not check_password_hash(user.password_hash, password):
-            return jsonify({'error': 'Invalid username or password'}), 401
+            return jsonify({'error': 'Invalid credentials'}), 401
         
         # Create access token
         access_token = create_access_token(user.id, user.username)

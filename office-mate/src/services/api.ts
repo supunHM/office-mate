@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 
-// Configure base URL - adjust this to your Python backend URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Configure base URL - Flask backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,14 +10,41 @@ const api = axios.create({
   },
 });
 
+// Add JWT token to all requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Helper to normalize document field names from backend to frontend
+const normalizeDocument = (doc: any): Document => ({
+  ...doc,
+  filename: doc.original_name || doc.filename,
+  createdAt: doc.created_at || doc.createdAt,
+});
+
+// Helper to normalize task field names
+const normalizeTask = (task: any): Task => ({
+  ...task,
+  dueDate: task.due_date || task.dueDate,
+  createdAt: task.created_at || task.createdAt,
+  documentName: task.document?.original_name || task.documentName,
+});
+
 // Types
 export interface Document {
   id: string;
-  filename: string;
+  filename?: string; // For frontend compatibility
+  original_name?: string; // Backend field name
   category: 'Finance' | 'HR' | 'Procurement' | 'Maintenance';
   tags: string[];
-  createdAt: string;
+  createdAt?: string; // Frontend field
+  created_at?: string; // Backend field
   summary?: string;
+  text_preview?: string;
 }
 
 export interface DocumentDetails extends Document {
@@ -63,10 +90,19 @@ export const documentsApi = {
     formData.append('file', file);
     
     try {
-      const response = await api.post<Document>('/documents', formData, {
+      const response = await api.post<Document>('/api/documents', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      return response.data;
+      return normalizeDocument(response.data);
+    } catch (error) {
+      return handleApiError(error as AxiosError);
+    }
+  },
+
+  getAll: async (): Promise<Document[]> => {
+    try {
+      const response = await api.get<{ documents: Document[]; pagination: any }>('/api/documents');
+      return response.data.documents.map(normalizeDocument);
     } catch (error) {
       return handleApiError(error as AxiosError);
     }
@@ -74,8 +110,8 @@ export const documentsApi = {
 
   search: async (params: DocumentSearchParams): Promise<Document[]> => {
     try {
-      const response = await api.get<Document[]>('/documents', { params });
-      return response.data;
+      const response = await api.get<{ documents: Document[]; pagination: any }>('/api/documents', { params });
+      return response.data.documents.map(normalizeDocument);
     } catch (error) {
       return handleApiError(error as AxiosError);
     }
@@ -95,10 +131,10 @@ export const documentsApi = {
 export const tasksApi = {
   getAll: async (status?: string): Promise<Task[]> => {
     try {
-      const response = await api.get<Task[]>('/tasks', { 
+      const response = await api.get<{ tasks: Task[]; pagination: any }>('/api/tasks', { 
         params: status ? { status } : undefined 
       });
-      return response.data;
+      return response.data.tasks.map(normalizeTask);
     } catch (error) {
       return handleApiError(error as AxiosError);
     }

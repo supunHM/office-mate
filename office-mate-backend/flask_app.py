@@ -19,7 +19,7 @@ app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB max file size
 
 # Enable CORS for frontend
-CORS(app, origins=['http://localhost:5173', 'http://localhost:3000'])
+CORS(app, origins=['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8081'], supports_credentials=True)
 
 # Initialize database
 init_db(app)

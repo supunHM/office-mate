@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Filter, 
@@ -10,7 +10,8 @@ import {
   Bell,
   AlertCircle,
   CheckCircle2,
-  Circle
+  Circle,
+  Loader2
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { mockTasks, mockDocuments, Task } from '@/services/api';
+import { tasksApi, documentsApi, Task, Document } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, isAfter, isBefore, addDays } from 'date-fns';
 
@@ -51,7 +52,9 @@ const Tasks: React.FC = () => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
 
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -66,6 +69,31 @@ const Tasks: React.FC = () => {
     documentId: '',
     reminder: '',
   });
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [tasksData, docsData] = await Promise.all([
+          tasksApi.getAll(),
+          documentsApi.getAll()
+        ]);
+        setTasks(tasksData);
+        setDocuments(docsData);
+      } catch (error) {
+        console.error('Failed to fetch tasks:', error);
+        toast({
+          title: language === 'en' ? 'Error' : 'දෝෂයක්',
+          description: language === 'en' ? 'Failed to load tasks' : 'කාර්යයන් පූරණය කිරීමට අසමත් විය',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [language, toast]);
 
   const statusOptions = [
     { value: 'all', label: t('tasks.all') },
@@ -144,7 +172,7 @@ const Tasks: React.FC = () => {
       return;
     }
 
-    const linkedDoc = mockDocuments.find(d => d.id === formData.documentId);
+    const linkedDoc = documents.find(d => d.id === formData.documentId);
 
     if (editingTask) {
       setTasks(prev => prev.map(t => 
@@ -303,6 +331,14 @@ const Tasks: React.FC = () => {
       </div>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -463,7 +499,7 @@ const Tasks: React.FC = () => {
                   <SelectItem value="">
                     {language === 'en' ? 'No document' : 'ලේඛනයක් නොමැත'}
                   </SelectItem>
-                  {mockDocuments.map((doc) => (
+                  {documents.map((doc) => (
                     <SelectItem key={doc.id} value={doc.id}>
                       {doc.filename}
                     </SelectItem>

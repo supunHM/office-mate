@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { 
   Upload, 
   Search, 
@@ -38,7 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { mockDocuments, mockTasks, Document } from '@/services/api';
+import { Document, documentsApi, tasksApi, Task } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO } from 'date-fns';
 
@@ -46,11 +46,47 @@ const Documents: React.FC = () => {
   const { t, language } = useLanguage();
   const { toast } = useToast();
 
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isUploading, setIsUploading] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadResult, setUploadResult] = useState<{ 
+    category: string; 
+    tags: string[]; 
+    summary: string;
+    extracted_text_length?: number;
+    extraction_method?: string;
+    text_preview?: string;
+  } | null>(null);
+
+  // Fetch documents and tasks on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingData(true);
+      try {
+        const [docsData, tasksData] = await Promise.all([
+          documentsApi.getAll(),
+          tasksApi.getAll()
+        ]);
+        setDocuments(docsData);
+        setTasks(tasksData);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast({
+          title: language === 'en' ? 'Error' : 'දෝෂයක්',
+          description: language === 'en' ? 'Failed to load documents' : 'ලේඛන පූරණය කිරීමට අසමත් විය',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+    fetchData();
+  }, [language, toast]);
 
   const categories = [
     { value: 'all', label: t('category.all') },
@@ -67,7 +103,7 @@ const Documents: React.FC = () => {
     Maintenance: 'bg-maintenance text-maintenance-foreground',
   };
 
-  const filteredDocs = mockDocuments.filter(doc => {
+  const filteredDocs = documents.filter(doc => {
     const matchesSearch = doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || doc.category === selectedCategory;
@@ -77,17 +113,40 @@ const Documents: React.FC = () => {
   const handleFileUpload = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     
+    const file = files[0];
     setIsUploading(true);
+    setUploadResult(null);
     
-    // Simulate upload
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: t('docs.uploadSuccess'),
-      description: `${files[0].name} - ${language === 'en' ? 'Classified as Finance' : 'මූල්‍ය ලෙස වර්ග කරන ලදී'}`,
-    });
-    
-    setIsUploading(false);
+    try {
+      // Upload to Flask API
+      const result = await documentsApi.upload(file);
+      
+      // Add to documents list
+      setDocuments(prev => [result, ...prev]);
+      
+      // Store result for display
+      setUploadResult({
+        category: result.category,
+        tags: result.tags,
+        summary: result.summary || '',
+        extracted_text_length: result.extracted_text_length,
+        extraction_method: result.extraction_method,
+        text_preview: result.text_preview
+      });
+      
+      toast({
+        title: t('docs.uploadSuccess'),
+        description: `${file.name} - ${language === 'en' ? `Classified as ${result.category}` : `${result.category} ලෙස වර්ග කරන ලදී`}`,
+      });
+    } catch (error) {
+      toast({
+        title: language === 'en' ? 'Upload Failed' : 'උඩුගත කිරීම අසාර්ථක විය',
+        description: error instanceof Error ? error.message : language === 'en' ? 'Failed to upload document' : 'ලේඛනය උඩුගත කිරීමට අසමත් විය',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUploading(false);
+    }
   }, [toast, t, language]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -107,8 +166,16 @@ const Documents: React.FC = () => {
   }, []);
 
   const linkedTasks = selectedDoc 
-    ? mockTasks.filter(task => task.documentId === selectedDoc.id)
+    ? tasks.filter(task => task.documentId === selectedDoc.id)
     : [];
+
+  if (isLoadingData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -137,7 +204,7 @@ const Documents: React.FC = () => {
             id="file-upload"
             className="hidden"
             onChange={(e) => handleFileUpload(e.target.files)}
-            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
           />
           <label 
             htmlFor="file-upload" 
@@ -158,6 +225,85 @@ const Documents: React.FC = () => {
           </label>
         </CardContent>
       </Card>
+
+      {/* Upload Results */}
+      {uploadResult && (
+        <Card className="card-shadow border-l-4 border-l-primary">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              {language === 'en' ? 'AI Analysis Results' : 'AI විශ්ලේෂණ ප්‍රතිඵල'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                {language === 'en' ? 'Category' : 'වර්ගය'}
+              </p>
+              <Badge className={categoryColors[uploadResult.category as keyof typeof categoryColors]}>
+                {uploadResult.category}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                {language === 'en' ? 'Tags' : 'ටැග්'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {uploadResult.tags.map((tag, idx) => (
+                  <Badge key={idx} variant="secondary">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            {uploadResult.summary && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  {language === 'en' ? 'Summary' : 'සාරාංශය'}
+                </p>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {uploadResult.summary}
+                </p>
+              </div>
+            )}
+            
+            {/* OCR Extraction Details */}
+            {uploadResult.extracted_text_length !== undefined && (
+              <div className="border-t pt-4">
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  {language === 'en' ? 'Extraction Details' : 'උපුටා ගැනීමේ විස්තර'}
+                </p>
+                <div className="space-y-1 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">{language === 'en' ? 'Method:' : 'ක්‍රමය:'}</span>{' '}
+                    <Badge variant="outline" className="ml-2">
+                      {uploadResult.extraction_method?.includes('jpeg') || uploadResult.extraction_method?.includes('png') 
+                        ? (language === 'en' ? 'OCR (Image)' : 'OCR (රූපය)') 
+                        : (language === 'en' ? 'Direct (Document)' : 'සෘජු (ලේඛනය)')}
+                    </Badge>
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">{language === 'en' ? 'Text Extracted:' : 'පෙළ උපුටා ගන්නා ලදී:'}</span>{' '}
+                    <span className="font-medium">{uploadResult.extracted_text_length} {language === 'en' ? 'characters' : 'අක්ෂර'}</span>
+                  </p>
+                </div>
+                
+                {uploadResult.text_preview && (
+                  <div className="mt-3">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">
+                      {language === 'en' ? 'Extracted Text Preview:' : 'උපුටා ගත් පෙළ පෙරදසුන:'}
+                    </p>
+                    <div className="bg-muted/50 p-3 rounded text-xs font-mono text-foreground max-h-32 overflow-y-auto">
+                      {uploadResult.text_preview}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search and Filter */}
       <div className="flex flex-col sm:flex-row gap-4">

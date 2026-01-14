@@ -72,11 +72,20 @@ def extract_text_from_image(file_bytes):
     """Extract text from image using Tesseract OCR"""
     try:
         image = Image.open(io.BytesIO(file_bytes))
+        print(f"Image opened: size={image.size}, mode={image.mode}")
+        
         # Use Tesseract with English (add '+sin' for Sinhala if installed)
         text = pytesseract.image_to_string(image, lang='eng')
+        
+        print(f"OCR extraction completed: {len(text)} characters extracted")
+        if text:
+            print(f"First 100 chars: {text[:100]}")
+        
         return text
     except Exception as e:
         print(f"OCR error: {e}")
+        import traceback
+        traceback.print_exc()
         return ""
 
 
@@ -402,20 +411,23 @@ def upload_document():
         print(f"Extracting text from {original_filename}...")
         extracted_text = extract_text_from_file(file)
         
-        if not extracted_text or len(extracted_text.strip()) < 10:
+        # Detect file type for metadata
+        file.seek(0)
+        file_bytes = file.read()
+        file_type, _ = detect_actual_file_type(file_bytes, original_filename)
+        
+        # For images, be more lenient with minimum text requirement
+        min_chars = 5 if original_filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp')) else 10
+        
+        if not extracted_text or len(extracted_text.strip()) < min_chars:
             error_msg = 'Could not extract text from document. '
-            
-            # Detect file type for better error message
-            file.seek(0)
-            file_bytes = file.read()
-            actual_type, _ = detect_actual_file_type(file_bytes, original_filename)
             
             if original_filename.lower().endswith('.doc'):
                 error_msg += 'Old .doc format is not supported. Please open in Microsoft Word and Save As → Word Document (.docx).'
             elif original_filename.lower().endswith('.docx'):
-                if actual_type == 'text':
+                if file_type == 'text':
                     error_msg += 'File appears to be plain text with .docx extension. Please save as actual .docx in Word.'
-                elif actual_type == 'doc_old':
+                elif file_type == 'doc_old':
                     error_msg += 'File is in old .doc format with .docx extension. Open in Word and resave as .docx.'
                 else:
                     error_msg += 'File may be corrupted. Try: 1) Open in Word 2) Select All & Copy 3) New document 4) Paste 5) Save as .docx'
@@ -461,14 +473,22 @@ def upload_document():
         db.session.commit()
         
         # Step 7: Return response
-        return jsonify({
+        response_data = {
             'id': document.id,
             'category': category,
             'tags': tag_names,
             'summary': summary,
             'filename': original_filename,
-            'created_at': document.created_at.isoformat()
-        }), 201
+            'created_at': document.created_at.isoformat(),
+            'extracted_text_length': len(extracted_text),
+            'extraction_method': file_type  # Shows if it was OCR (image) or direct extraction (pdf/docx)
+        }
+        
+        # Add first 500 characters of extracted text for preview
+        if extracted_text:
+            response_data['text_preview'] = extracted_text[:500] + ('...' if len(extracted_text) > 500 else '')
+        
+        return jsonify(response_data), 201
         
     except Exception as e:
         db.session.rollback()
