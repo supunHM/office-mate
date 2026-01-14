@@ -7,6 +7,7 @@
 ## 📋 Daily Development Workflow
 
 ### 1. Start Development Server
+
 ```bash
 cd office-mate-backend
 source venv/bin/activate  # Activate virtual environment
@@ -14,10 +15,12 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### 2. Check API Documentation
+
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
 ### 3. Test Endpoints
+
 Use the interactive Swagger UI or curl commands from API_ROUTES.md
 
 ---
@@ -27,6 +30,7 @@ Use the interactive Swagger UI or curl commands from API_ROUTES.md
 ### Adding a New Model Field
 
 1. **Update Model** ([app/models.py](app/models.py))
+
 ```python
 class Document(Base):
     # ... existing fields
@@ -34,6 +38,7 @@ class Document(Base):
 ```
 
 2. **Update Schema** ([app/schemas.py](app/schemas.py))
+
 ```python
 class DocumentBase(BaseModel):
     # ... existing fields
@@ -41,6 +46,7 @@ class DocumentBase(BaseModel):
 ```
 
 3. **Recreate Database** (Development only)
+
 ```bash
 rm app.db  # Delete old database
 python init_db.py  # Create new one
@@ -49,6 +55,7 @@ python init_db.py  # Create new one
 ### Adding a New API Endpoint
 
 1. **Add Route** ([app/routers/your_router.py](app/routers/))
+
 ```python
 @router.get("/new-endpoint")
 def new_endpoint(db: Session = Depends(get_db)):
@@ -57,6 +64,7 @@ def new_endpoint(db: Session = Depends(get_db)):
 ```
 
 2. **Test in Swagger**
+
 - Go to http://localhost:8000/docs
 - Find your new endpoint
 - Click "Try it out"
@@ -64,6 +72,7 @@ def new_endpoint(db: Session = Depends(get_db)):
 ### Adding a New Service Function
 
 1. **Create Function** ([app/services/your_service.py](app/services/))
+
 ```python
 def process_data(data: str) -> dict:
     """Process data and return result"""
@@ -72,6 +81,7 @@ def process_data(data: str) -> dict:
 ```
 
 2. **Use in Router**
+
 ```python
 from app.services.your_service import process_data
 
@@ -86,6 +96,7 @@ def process(data: str):
 ## 🗄️ Database Management
 
 ### View Database Contents
+
 ```bash
 # Install sqlite3 if not available
 brew install sqlite3  # macOS
@@ -108,6 +119,7 @@ SELECT id, filename, category, user_id FROM documents;
 ```
 
 ### Reset Database
+
 ```bash
 # Delete database
 rm app.db
@@ -117,7 +129,9 @@ python init_db.py
 ```
 
 ### Database Migrations (Production)
+
 For production, use Alembic:
+
 ```bash
 pip install alembic
 alembic init migrations
@@ -133,6 +147,7 @@ alembic upgrade head
 ### Manual API Testing
 
 #### 1. Register User
+
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
@@ -144,14 +159,17 @@ curl -X POST http://localhost:8000/auth/register \
 ```
 
 #### 2. Login
+
 ```bash
 curl -X POST http://localhost:8000/auth/login \
   -F "username=testuser" \
   -F "password=test123"
 ```
+
 Save the `access_token` from response.
 
 #### 3. Upload Document
+
 ```bash
 curl -X POST http://localhost:8000/documents/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
@@ -159,6 +177,7 @@ curl -X POST http://localhost:8000/documents/ \
 ```
 
 #### 4. Create Task
+
 ```bash
 curl -X POST http://localhost:8000/tasks/ \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
@@ -171,7 +190,9 @@ curl -X POST http://localhost:8000/tasks/ \
 ```
 
 ### Python Testing Script
+
 Create `test_api.py`:
+
 ```python
 import requests
 
@@ -206,50 +227,65 @@ Run: `python test_api.py`
 ## 🐛 Debugging
 
 ### Enable Debug Logging
+
 Add to [app/main.py](app/main.py):
+
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
 ```
 
 ### Check Logs
+
 Server logs appear in terminal where you ran `uvicorn`.
 
 ### Common Issues
 
 #### 1. Import Errors
+
 ```
 ModuleNotFoundError: No module named 'fastapi'
 ```
+
 **Solution**: Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 #### 2. Database Locked
+
 ```
 sqlite3.OperationalError: database is locked
 ```
+
 **Solution**: Stop all server instances
+
 ```bash
 pkill -f uvicorn
 ```
 
 #### 3. Port Already in Use
+
 ```
 ERROR: [Errno 48] Address already in use
 ```
+
 **Solution**: Use different port or kill process
+
 ```bash
 lsof -ti:8000 | xargs kill -9
 uvicorn app.main:app --reload --port 8001
 ```
 
 #### 4. Tesseract Not Found
+
 ```
 pytesseract.pytesseract.TesseractNotFoundError
 ```
+
 **Solution**: Install Tesseract
+
 ```bash
 brew install tesseract tesseract-lang  # macOS
 ```
@@ -259,17 +295,20 @@ brew install tesseract tesseract-lang  # macOS
 ## 📦 Dependency Management
 
 ### Add New Dependency
+
 ```bash
 pip install new-package
 pip freeze > requirements.txt
 ```
 
 ### Update All Dependencies
+
 ```bash
 pip install --upgrade -r requirements.txt
 ```
 
 ### Check Outdated Packages
+
 ```bash
 pip list --outdated
 ```
@@ -279,6 +318,7 @@ pip list --outdated
 ## 🔐 Environment Configuration
 
 ### Development (.env)
+
 ```env
 DATABASE_URL=sqlite:///./app.db
 SECRET_KEY=dev-secret-key
@@ -286,6 +326,7 @@ CORS_ORIGINS=http://localhost:5173
 ```
 
 ### Production (.env.production)
+
 ```env
 DATABASE_URL=postgresql://user:pass@host/db
 SECRET_KEY=super-secure-random-key-here
@@ -293,6 +334,7 @@ CORS_ORIGINS=https://yourdomain.com
 ```
 
 ### Load Environment
+
 ```python
 from dotenv import load_dotenv
 load_dotenv('.env.production')
@@ -303,7 +345,9 @@ load_dotenv('.env.production')
 ## 🚀 Deployment
 
 ### Docker Deployment
+
 Create `Dockerfile`:
+
 ```dockerfile
 FROM python:3.10-slim
 
@@ -324,12 +368,14 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 Build and run:
+
 ```bash
 docker build -t office-mate-backend .
 docker run -p 8000:8000 office-mate-backend
 ```
 
 ### Production Server (gunicorn)
+
 ```bash
 pip install gunicorn
 gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
@@ -340,21 +386,25 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 ## 📊 Monitoring
 
 ### Health Check
+
 ```bash
 curl http://localhost:8000/
 ```
 
 ### Check All Endpoints
+
 ```bash
 curl http://localhost:8000/docs
 ```
 
 ### Database Size
+
 ```bash
 ls -lh app.db
 ```
 
 ### Upload Directory Size
+
 ```bash
 du -sh uploads/
 ```
@@ -364,6 +414,7 @@ du -sh uploads/
 ## 🔄 Git Workflow
 
 ### Initial Commit
+
 ```bash
 git init
 git add .
@@ -371,6 +422,7 @@ git commit -m "Initial backend implementation"
 ```
 
 ### Daily Work
+
 ```bash
 # Create feature branch
 git checkout -b feature/new-feature
@@ -387,6 +439,7 @@ git push origin feature/new-feature
 ```
 
 ### .gitignore Important Items
+
 - `app.db` (database)
 - `.env` (secrets)
 - `uploads/` (user files)
@@ -398,6 +451,7 @@ git push origin feature/new-feature
 ## 📝 Code Style
 
 ### Follow PEP 8
+
 ```bash
 pip install black flake8
 black app/  # Format code
@@ -405,21 +459,24 @@ flake8 app/  # Check style
 ```
 
 ### Type Hints
+
 Always use type hints:
+
 ```python
 def process_document(doc_id: int, db: Session) -> Document:
     return db.query(Document).filter(Document.id == doc_id).first()
 ```
 
 ### Docstrings
+
 ```python
 def upload_document(file: UploadFile) -> Document:
     """
     Upload and process a document.
-    
+
     Args:
         file: The uploaded file
-        
+
     Returns:
         Document: The created document object
     """

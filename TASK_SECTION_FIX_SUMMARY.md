@@ -7,6 +7,7 @@ This document outlines the comprehensive fixes applied to the Task management sy
 ## Report Requirements Implemented
 
 ### Core Functional Requirements
+
 1. ✅ **Create, update, and track tasks** - Full CRUD operations via REST API
 2. ✅ **Link tasks to specific documents** - `linked_document_id` field support
 3. ✅ **Priority levels** - low, medium, high, urgent
@@ -21,13 +22,16 @@ This document outlines the comprehensive fixes applied to the Task management sy
 ### Backend Changes
 
 #### 1. `/office-mate-backend/flask_tasks_api.py` (Complete Rewrite)
+
 **Issues Fixed:**
+
 - Backend used PascalCase values (Todo, InProgress, Done) while frontend expected lowercase
 - Backend used PascalCase priority (Low, Medium, High) while frontend expected lowercase
 - No support for both `due_date` and `dueDate` field naming conventions
 - No support for both `document_id` and `documentId` conventions
 
 **Changes:**
+
 ```python
 # Added status and priority mapping dictionaries
 STATUS_MAP = {
@@ -90,6 +94,7 @@ PRIORITY_MAP = {
 
 **Report Requirement Comments Added:**
 Every endpoint now has clear comments explaining which report requirement it fulfills:
+
 ```python
 # REPORT REQUIREMENT: Allow users to create tasks linked to documents
 # REPORT REQUIREMENT: Filter tasks by status, due_date range, and linked_document_id
@@ -97,7 +102,9 @@ Every endpoint now has clear comments explaining which report requirement it ful
 ```
 
 #### 2. `/office-mate-backend/flask_models.py`
+
 **Changes:**
+
 ```python
 class Task(db.Model):
     """
@@ -115,13 +122,16 @@ class Task(db.Model):
 ### Frontend Changes
 
 #### 3. `/office-mate/src/services/api.ts`
+
 **Issues Fixed:**
+
 - Task endpoints pointed to `/tasks` instead of `/api/tasks`
 - No field name mapping between frontend (camelCase) and backend (snake_case)
 - No support for upcoming tasks endpoint
 - No support for filtering tasks by document
 
 **Changes:**
+
 ```typescript
 // Added comprehensive task API methods
 export const tasksApi = {
@@ -135,6 +145,7 @@ export const tasksApi = {
 ```
 
 **Field Mapping:**
+
 - `dueDate` → `due_date` (frontend → backend)
 - `documentId` → `document_id`
 - Handles both naming conventions in responses
@@ -142,6 +153,7 @@ export const tasksApi = {
 
 **Report Requirement Comments:**
 All methods now have comments explaining their purpose:
+
 ```typescript
 // REPORT REQUIREMENT: Filter by status, due_from, due_to, and linked_document_id
 // REPORT REQUIREMENT: deadline reminders
@@ -149,7 +161,9 @@ All methods now have comments explaining their purpose:
 ```
 
 #### 4. `/office-mate/src/pages/Tasks.tsx`
+
 **Issues Fixed:**
+
 - Tasks were only stored in local state, never sent to API
 - Status changes didn't call API
 - Deleting tasks didn't call API
@@ -158,6 +172,7 @@ All methods now have comments explaining their purpose:
 **Changes:**
 
 1. **handleSave()** - Now async, calls API:
+
 ```typescript
 const handleSave = async () => {
   if (editingTask) {
@@ -171,23 +186,31 @@ const handleSave = async () => {
 ```
 
 2. **handleDelete()** - Now async, calls API:
+
 ```typescript
 const handleDelete = async () => {
   await tasksApi.delete(deleteTask.id);
-  setTasks(prev => prev.filter(t => t.id !== deleteTask.id));
-}
+  setTasks((prev) => prev.filter((t) => t.id !== deleteTask.id));
+};
 ```
 
 3. **handleStatusChange()** - Now async, calls API:
+
 ```typescript
-const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+const handleStatusChange = async (
+  taskId: string,
+  newStatus: Task["status"]
+) => {
   await tasksApi.update(taskId, { status: newStatus });
-  setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-}
+  setTasks((prev) =>
+    prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+  );
+};
 ```
 
 **Report Requirements Header:**
 Added comprehensive documentation at the top of the file:
+
 ```typescript
 /**
  * REPORT REQUIREMENTS IMPLEMENTATION:
@@ -204,21 +227,25 @@ Added comprehensive documentation at the top of the file:
 ```
 
 #### 5. `/office-mate/src/pages/Dashboard.tsx`
+
 **Issues Fixed:**
+
 - Dashboard didn't use upcoming tasks API
 - No specific endpoint call for deadline reminders
 
 **Changes:**
+
 ```typescript
 const [docsData, tasksData, upcomingData] = await Promise.all([
   documentsApi.getAll(),
   tasksApi.getAll(),
-  tasksApi.getUpcoming(7)  // REPORT REQUIREMENT: Get tasks due in next 7 days
+  tasksApi.getUpcoming(7), // REPORT REQUIREMENT: Get tasks due in next 7 days
 ]);
 ```
 
 **Report Requirements Header:**
 Added documentation explaining dashboard integration:
+
 ```typescript
 /**
  * REPORT REQUIREMENTS IMPLEMENTATION:
@@ -235,6 +262,7 @@ Added documentation explaining dashboard integration:
 ### Complete Task API Reference
 
 #### 1. Create Task
+
 ```http
 POST /api/tasks
 Authorization: Bearer <token>
@@ -268,6 +296,7 @@ Response (201):
 ```
 
 #### 2. Get All Tasks (with filters)
+
 ```http
 GET /api/tasks?status=pending&document_id=5&due_from=2026-01-01&due_to=2026-01-31&page=1&per_page=50
 Authorization: Bearer <token>
@@ -303,6 +332,7 @@ Response (200):
 ```
 
 #### 3. Update Task
+
 ```http
 PATCH /api/tasks/1
 Authorization: Bearer <token>
@@ -332,6 +362,7 @@ Response (200):
 ```
 
 #### 4. Delete Task
+
 ```http
 DELETE /api/tasks/1
 Authorization: Bearer <token>
@@ -343,6 +374,7 @@ Response (200):
 ```
 
 #### 5. Get Upcoming Tasks
+
 ```http
 GET /api/tasks/upcoming?days=3
 Authorization: Bearer <token>
@@ -376,6 +408,7 @@ Response (200):
 ## Data Flow
 
 ### Creating a Task from Document Context
+
 ```
 1. User views document details
 2. Clicks "Create Task" button
@@ -389,6 +422,7 @@ Response (200):
 ```
 
 ### Viewing Tasks for a Document
+
 ```
 1. User views document details page
 2. Frontend calls: tasksApi.getByDocument(documentId)
@@ -398,6 +432,7 @@ Response (200):
 ```
 
 ### Dashboard Upcoming Tasks
+
 ```
 1. Dashboard loads
 2. Frontend calls: tasksApi.getUpcoming(7)
@@ -412,6 +447,7 @@ Response (200):
 All user-facing strings are centralized via the `t()` translation function:
 
 **English Labels:**
+
 - `tasks.title` → "Tasks"
 - `tasks.pending` → "Pending"
 - `tasks.in_progress` → "In Progress"
@@ -423,12 +459,14 @@ All user-facing strings are centralized via the `t()` translation function:
 
 **Sinhala Labels:**
 Ready for translation in LanguageContext:
+
 - `tasks.title` → "කාර්යයන්"
 - `tasks.pending` → "පොරොත්තුව"
 - `tasks.completed` → "සම්පූර්ණයි"
 - etc.
 
 All hard-coded strings like "Enter task name..." have been marked with language checks:
+
 ```typescript
 placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම ඇතුලත් කරන්න...'}
 ```
@@ -436,6 +474,7 @@ placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම 
 ## Validation & Error Handling
 
 ### Backend Validation
+
 - ✅ Title is required (cannot be empty)
 - ✅ Priority must be one of: low, medium, high, urgent
 - ✅ Status must be one of: pending, in_progress, completed
@@ -445,6 +484,7 @@ placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම 
 - ✅ Users can only view/edit/delete their own tasks
 
 ### Frontend Error Handling
+
 - ✅ Toast notifications for all API errors (bilingual)
 - ✅ Loading states during API calls
 - ✅ Optimistic UI updates with rollback on error
@@ -453,6 +493,7 @@ placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම 
 ## Testing Checklist
 
 ### Backend Testing
+
 - [ ] Start Flask server: `python flask_app.py`
 - [ ] Test create task: `POST /api/tasks` with valid payload
 - [ ] Test create task with document link
@@ -466,6 +507,7 @@ placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම 
 - [ ] Verify user can only access their own tasks
 
 ### Frontend Testing
+
 - [ ] Navigate to /tasks page
 - [ ] Create a new task (no document link)
 - [ ] Create a task linked to a document
@@ -480,6 +522,7 @@ placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම 
 - [ ] Test bilingual support (switch language)
 
 ### Integration Testing
+
 - [ ] Create document → Create task from document → Verify link
 - [ ] View document → See linked tasks in sidebar
 - [ ] Complete task → Verify removed from "upcoming" on Dashboard
@@ -490,6 +533,7 @@ placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම 
 ## Migration Guide
 
 ### Database Migration
+
 The task table schema has changed. Existing data needs migration:
 
 ```sql
@@ -506,6 +550,7 @@ UPDATE tasks SET priority = 'urgent' WHERE priority = 'Urgent';
 ```
 
 Alternatively, drop and recreate the database (development only):
+
 ```bash
 cd office-mate-backend
 rm office_mate.db
@@ -515,18 +560,22 @@ python flask_app.py  # Will auto-create new schema
 ## Performance Considerations
 
 ### Database Indexes
+
 All queries are optimized with composite indexes:
+
 - `idx_task_user_status` - Fast filtering by user + status
 - `idx_task_user_due` - Fast filtering by user + due_date
 - Foreign key indexes on `document_id` and `user_id`
 
 ### API Response Times
+
 - GET /api/tasks: ~50-100ms (with 50 tasks)
 - GET /api/tasks/upcoming: ~30-50ms (filtered query)
 - POST /api/tasks: ~80-120ms (includes document validation)
 - PATCH /api/tasks/<id>: ~60-100ms
 
 ### Frontend Optimizations
+
 - Parallel API calls in useEffect (documents + tasks + upcoming)
 - Optimistic UI updates (update state before API response)
 - Debounced filter changes
@@ -535,16 +584,19 @@ All queries are optimized with composite indexes:
 ## Security
 
 ### Authentication
+
 - All endpoints require valid JWT token
 - Token validation via `get_current_user()` helper
 - 401 response if unauthorized
 
 ### Authorization
+
 - Users can only see their own tasks
 - Document linking validates document ownership
 - No cross-user data leakage
 
 ### Input Validation
+
 - All inputs sanitized via `.strip()`
 - Date parsing with try/catch
 - Integer conversion with error handling

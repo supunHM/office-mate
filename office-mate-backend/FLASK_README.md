@@ -3,6 +3,7 @@
 ## Overview
 
 Complete Flask backend implementation for **Office Mate** document management system with:
+
 - ✅ File upload (PDF, Images, Word)
 - ✅ OCR text extraction (PyPDF2 + Tesseract)
 - ✅ NLP preprocessing (spaCy)
@@ -32,6 +33,7 @@ office-mate-backend/
 ## ⚡ Quick Start (3 Steps)
 
 ### Step 1: Install Dependencies
+
 ```bash
 pip install -r flask_requirements.txt
 brew install tesseract  # macOS
@@ -39,6 +41,7 @@ python -m spacy download en_core_web_sm
 ```
 
 ### Step 2: Setup Database & ML Model
+
 ```bash
 # Initialize database
 python -c "from flask_app import app, db; app.app_context().push(); db.create_all()"
@@ -48,6 +51,7 @@ python train_flask_classifier.py
 ```
 
 ### Step 3: Start Server
+
 ```bash
 python flask_app.py
 ```
@@ -63,6 +67,7 @@ Server runs at: **http://localhost:5000**
 Upload and process documents with OCR, NLP, and ML classification.
 
 **Request:**
+
 ```bash
 curl -X POST http://localhost:5000/api/documents \
   -F "file=@invoice.pdf" \
@@ -70,6 +75,7 @@ curl -X POST http://localhost:5000/api/documents \
 ```
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -121,18 +127,22 @@ JSON Response
 ## 📊 Database Models
 
 ### User
+
 - `id`, `username`, `email`, `password_hash`
 - Relationships: documents, tasks
 
 ### Document
+
 - `id`, `file_path`, `original_name`, `text`, `category`, `user_id`
 - Relationships: owner, tags (M:N), tasks
 
 ### Tag
+
 - `id`, `name`
 - Relationships: documents (M:N)
 
 ### Task
+
 - `id`, `title`, `description`, `priority`, `due_date`, `status`
 - `document_id` (optional), `user_id`
 - Relationships: owner, document
@@ -142,11 +152,13 @@ JSON Response
 ## 🧪 Testing
 
 ### Quick Test
+
 ```bash
 python test_flask_api.py
 ```
 
 ### Manual Test with curl
+
 ```bash
 # Upload PDF
 curl -X POST http://localhost:5000/api/documents \
@@ -160,6 +172,7 @@ curl http://localhost:5000/api/documents/1
 ```
 
 ### Python Test
+
 ```python
 import requests
 
@@ -174,33 +187,35 @@ print(response.json())
 ## 🎨 Frontend Integration
 
 ### JavaScript Example
+
 ```javascript
 // Upload document
 const formData = new FormData();
-formData.append('file', fileInput.files[0]);
+formData.append("file", fileInput.files[0]);
 
-const response = await fetch('http://localhost:5000/api/documents', {
-  method: 'POST',
-  body: formData
+const response = await fetch("http://localhost:5000/api/documents", {
+  method: "POST",
+  body: formData,
 });
 
 const result = await response.json();
-console.log('Category:', result.category);
-console.log('Tags:', result.tags);
-console.log('Summary:', result.summary);
+console.log("Category:", result.category);
+console.log("Tags:", result.tags);
+console.log("Summary:", result.summary);
 ```
 
 ### React Example
+
 ```jsx
 const handleUpload = async (file) => {
   const formData = new FormData();
-  formData.append('file', file);
-  
-  const response = await fetch('http://localhost:5000/api/documents', {
-    method: 'POST',
-    body: formData
+  formData.append("file", file);
+
+  const response = await fetch("http://localhost:5000/api/documents", {
+    method: "POST",
+    body: formData,
   });
-  
+
   const data = await response.json();
   setCategory(data.category);
   setTags(data.tags);
@@ -213,12 +228,14 @@ const handleUpload = async (file) => {
 ## 📋 Features Implemented
 
 ### ✅ File Processing
+
 - PDF text extraction (PyPDF2)
 - Image OCR (Tesseract)
 - Word document extraction (python-docx)
 - Fallback to OCR for scanned PDFs
 
 ### ✅ NLP & ML
+
 - Text preprocessing with spaCy
 - Document classification (4 categories)
 - Named entity recognition
@@ -226,12 +243,14 @@ const handleUpload = async (file) => {
 - Summary generation
 
 ### ✅ Database
+
 - SQLAlchemy models
 - Many-to-many tag relationships
 - User-specific data isolation
 - SQLite storage
 
 ### ✅ API
+
 - RESTful endpoints
 - File upload handling
 - JSON responses
@@ -243,10 +262,12 @@ const handleUpload = async (file) => {
 ## 🔐 Security Notes
 
 **Current Implementation:**
+
 - Uses `user_id` from form data (for testing)
 - No authentication middleware
 
 **Production Recommendations:**
+
 1. Add authentication (Flask-Login or JWT)
 2. Validate user permissions
 3. Add rate limiting
@@ -258,17 +279,20 @@ const handleUpload = async (file) => {
 ## 📦 Dependencies
 
 ### Core
+
 - Flask 3.0.0
 - Flask-SQLAlchemy 3.1.1
 - Flask-CORS 4.0.0
 
 ### Document Processing
+
 - PyPDF2 3.0.1
 - Pillow 10.2.0
 - pytesseract 0.3.10
 - python-docx 1.1.0
 
 ### NLP & ML
+
 - spaCy 3.7.2
 - scikit-learn 1.4.0
 - joblib 1.3.2
@@ -278,21 +302,25 @@ const handleUpload = async (file) => {
 ## 🐛 Troubleshooting
 
 ### "spaCy model not found"
+
 ```bash
 python -m spacy download en_core_web_sm
 ```
 
 ### "Tesseract not found"
+
 ```bash
 brew install tesseract  # macOS
 sudo apt install tesseract-ocr  # Ubuntu
 ```
 
 ### "No text extracted"
+
 - Ensure Tesseract is installed
 - Check if PDF is scanned (API auto-tries OCR)
 
 ### "Module not found"
+
 ```bash
 pip install -r flask_requirements.txt
 ```
@@ -344,12 +372,12 @@ pip install -r flask_requirements.txt
 
 ## 📞 API Endpoints Summary
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Health check |
-| POST | `/api/documents` | Upload & process document |
-| GET | `/api/documents` | List all documents |
-| GET | `/api/documents/:id` | Get specific document |
+| Method | Endpoint             | Description               |
+| ------ | -------------------- | ------------------------- |
+| GET    | `/`                  | Health check              |
+| POST   | `/api/documents`     | Upload & process document |
+| GET    | `/api/documents`     | List all documents        |
+| GET    | `/api/documents/:id` | Get specific document     |
 
 ---
 
@@ -360,6 +388,7 @@ The Flask backend is **fully implemented** and ready to integrate with your exis
 **No UI changes were made** - only backend logic as requested! ✅
 
 Start the server and test with:
+
 ```bash
 python flask_app.py
 python test_flask_api.py

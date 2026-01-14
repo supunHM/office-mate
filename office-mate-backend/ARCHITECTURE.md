@@ -3,6 +3,7 @@
 ## 🎯 Project Overview
 
 **AI-Powered Document Organizer with Smart To-Do List**
+
 - Target: Sri Lankan offices
 - Features: OCR, ML classification, bilingual support (English/Sinhala)
 - Categories: Finance, HR, Procurement, Maintenance
@@ -11,14 +12,14 @@
 
 ## 🏗️ Technology Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Framework | FastAPI (Python) |
-| Database | SQLite + SQLAlchemy ORM |
-| Authentication | JWT (OAuth2) + bcrypt |
-| OCR | Tesseract + Pillow |
-| ML/NLP | scikit-learn (TF-IDF + LinearSVC) |
-| Document Processing | PyPDF2, python-docx |
+| Component           | Technology                        |
+| ------------------- | --------------------------------- |
+| Framework           | FastAPI (Python)                  |
+| Database            | SQLite + SQLAlchemy ORM           |
+| Authentication      | JWT (OAuth2) + bcrypt             |
+| OCR                 | Tesseract + Pillow                |
+| ML/NLP              | scikit-learn (TF-IDF + LinearSVC) |
+| Document Processing | PyPDF2, python-docx               |
 
 ---
 
@@ -70,6 +71,7 @@ office-mate-backend/
 ## 🗄️ Database Schema
 
 ### User
+
 ```sql
 CREATE TABLE users (
     id INTEGER PRIMARY KEY,
@@ -85,6 +87,7 @@ CREATE TABLE users (
 ```
 
 ### Document
+
 ```sql
 CREATE TABLE documents (
     id INTEGER PRIMARY KEY,
@@ -103,6 +106,7 @@ CREATE TABLE documents (
 ```
 
 ### Tag
+
 ```sql
 CREATE TABLE tags (
     id INTEGER PRIMARY KEY,
@@ -121,6 +125,7 @@ CREATE TABLE document_tags (
 ```
 
 ### Task
+
 ```sql
 CREATE TABLE tasks (
     id INTEGER PRIMARY KEY,
@@ -144,6 +149,7 @@ CREATE TABLE tasks (
 ## 🔌 API Endpoints Summary
 
 ### Authentication (5 routes)
+
 - POST `/auth/register` - User registration
 - POST `/auth/login` - JWT token generation
 - GET `/auth/me` - Current user info
@@ -151,6 +157,7 @@ CREATE TABLE tasks (
 - POST `/auth/logout` - Logout
 
 ### Documents (7 routes)
+
 - POST `/documents/` - Upload + OCR + classify
 - GET `/documents/` - List with search/filter
 - GET `/documents/{id}` - Get details
@@ -160,6 +167,7 @@ CREATE TABLE tasks (
 - DELETE `/documents/{id}/tags/{tag_id}` - Remove tag
 
 ### Tasks (5 routes)
+
 - POST `/tasks/` - Create task
 - GET `/tasks/` - List with filters
 - GET `/tasks/{id}` - Get details
@@ -167,6 +175,7 @@ CREATE TABLE tasks (
 - DELETE `/tasks/{id}` - Delete
 
 ### Tags (5 routes)
+
 - POST `/tags/` - Create tag
 - GET `/tags/` - List all
 - GET `/tags/{id}` - Get details
@@ -174,6 +183,7 @@ CREATE TABLE tasks (
 - DELETE `/tags/{id}` - Delete
 
 ### Statistics (3 routes)
+
 - GET `/stats/dashboard` - Overview stats
 - GET `/stats/documents` - Document analytics
 - GET `/stats/tasks` - Task analytics
@@ -196,18 +206,21 @@ CREATE TABLE tasks (
 ## 🤖 AI/ML Features
 
 ### OCR Pipeline
+
 1. **File Upload** → FastAPI UploadFile
 2. **Format Detection** → PDF/Image/Word
 3. **Text Extraction** → Tesseract (eng+sin)
 4. **Content Storage** → Database
 
 ### Document Classification
+
 1. **Training**: TF-IDF vectorization + LinearSVC
 2. **Prediction**: Categorize into 4 classes
 3. **Model Storage**: joblib serialization
 4. **Auto-classification**: On document upload
 
 ### Supported Formats
+
 - **PDF**: PyPDF2 text extraction
 - **Images**: PNG, JPG, TIFF, BMP (Tesseract)
 - **Word**: DOCX (python-docx)
@@ -217,6 +230,7 @@ CREATE TABLE tasks (
 ## 🌐 Bilingual Support
 
 ### Sinhala + English
+
 - User `preferred_language` field
 - Task `title_si`, `description_si` fields
 - Tag `name_si` field
@@ -228,18 +242,21 @@ CREATE TABLE tasks (
 ## 📊 Business Logic Highlights
 
 ### Task Management
+
 - Auto-set `completed_at` when status → "Done"
 - Overdue detection (due_date < today && status != Done)
 - Upcoming filter (next N days)
 - Priority-based sorting
 
 ### Document Search
+
 - Full-text search (filename, content)
 - Category filtering
 - Date range filtering
 - Tag-based organization
 
 ### Statistics
+
 - Document count by category
 - Task completion rates
 - Overdue task tracking
@@ -250,6 +267,7 @@ CREATE TABLE tasks (
 ## 🚀 Deployment Checklist
 
 ### Development
+
 ```bash
 # 1. Install dependencies
 pip install -r requirements.txt
@@ -266,6 +284,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 ### Production
+
 1. Change `SECRET_KEY` in `.env`
 2. Use PostgreSQL instead of SQLite
 3. Configure CORS_ORIGINS
@@ -279,6 +298,7 @@ uvicorn app.main:app --reload --port 8000
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```env
 DATABASE_URL=sqlite:///./app.db
 SECRET_KEY=your-secret-key-here
@@ -287,6 +307,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=10080  # 7 days
 ```
 
 ### File Upload Limits
+
 - Max size: 10 MB
 - Allowed: PDF, Word, PNG, JPG, TIFF, BMP
 
@@ -308,6 +329,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=10080  # 7 days
 ## 🧪 Testing
 
 ### Manual Testing
+
 ```bash
 # Register user
 curl -X POST http://localhost:8000/auth/register \
@@ -326,6 +348,7 @@ curl -X POST http://localhost:8000/documents/ \
 ```
 
 ### API Documentation
+
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
@@ -342,6 +365,7 @@ curl -X POST http://localhost:8000/documents/ \
 ## 👥 Default Credentials (After Seeding)
 
 **Admin User:**
+
 - Username: `admin`
 - Password: `admin123`
 - Email: `admin@officemate.lk`

@@ -3,6 +3,7 @@
 ## Quick Setup
 
 ### 1. Install Dependencies
+
 ```bash
 pip install flask flask-sqlalchemy
 ```
@@ -25,6 +26,7 @@ init_db(app)
 ```
 
 ### 3. Create Tables
+
 ```python
 # Run once to create all tables
 from flask_models import db
@@ -35,6 +37,7 @@ with app.app_context():
 ## Usage Examples
 
 ### Create a User
+
 ```python
 from werkzeug.security import generate_password_hash
 from flask_models import db, User
@@ -50,6 +53,7 @@ db.session.commit()
 ```
 
 ### Create a Document
+
 ```python
 from flask_models import db, Document
 
@@ -65,6 +69,7 @@ db.session.commit()
 ```
 
 ### Add Tags to Document
+
 ```python
 from flask_models import db, Tag
 
@@ -79,6 +84,7 @@ db.session.commit()
 ```
 
 ### Create a Task
+
 ```python
 from datetime import date
 from flask_models import db, Task
@@ -99,22 +105,26 @@ db.session.commit()
 ### Query Examples
 
 #### Get user's documents
+
 ```python
 user_docs = Document.query.filter_by(user_id=user.id).all()
 ```
 
 #### Search documents by category
+
 ```python
 finance_docs = Document.query.filter_by(category='Finance').all()
 ```
 
 #### Get documents with specific tag
+
 ```python
 tag = Tag.query.filter_by(name='Invoice').first()
 tagged_docs = tag.documents  # Access via backref
 ```
 
 #### Get user's tasks with filters
+
 ```python
 # Get pending high priority tasks
 tasks = Task.query.filter_by(
@@ -133,6 +143,7 @@ overdue = Task.query.filter(
 ```
 
 #### Get task with linked document
+
 ```python
 task = Task.query.get(1)
 if task.document:
@@ -157,6 +168,7 @@ User (1) ──────> (N) Document
 ## Field Descriptions
 
 ### User
+
 - `id`: Primary key
 - `username`: Unique username (indexed)
 - `email`: Unique email (indexed)
@@ -165,6 +177,7 @@ User (1) ──────> (N) Document
 - `created_at`: Account creation timestamp
 
 ### Document
+
 - `id`: Primary key
 - `file_path`: Path to stored file
 - `original_name`: Original filename
@@ -176,11 +189,13 @@ User (1) ──────> (N) Document
 - `tasks`: One-to-many with Task
 
 ### Tag
+
 - `id`: Primary key
 - `name`: Unique tag name (indexed)
 - `documents`: Many-to-many with Document (via backref)
 
 ### Task
+
 - `id`: Primary key
 - `title`: Task title
 - `description`: Task description

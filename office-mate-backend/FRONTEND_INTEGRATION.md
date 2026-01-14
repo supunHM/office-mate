@@ -1,6 +1,7 @@
 # Frontend Integration Guide for Search API
 
 ## Overview
+
 This guide shows how to integrate the search API with the existing React/TypeScript frontend.
 
 ## TypeScript Types
@@ -11,7 +12,7 @@ Create `src/types/search.ts`:
 export interface Document {
   id: number;
   original_name: string;
-  category: 'Finance' | 'HR' | 'Procurement' | 'Maintenance';
+  category: "Finance" | "HR" | "Procurement" | "Maintenance";
   tags: string[];
   created_at: string;
   text_preview: string;
@@ -47,10 +48,10 @@ export interface SearchFilters {
 Update `src/services/api.ts`:
 
 ```typescript
-import axios from 'axios';
-import { SearchFilters, SearchResponse } from '../types/search';
+import axios from "axios";
+import { SearchFilters, SearchResponse } from "../types/search";
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export const documentApi = {
   /**
@@ -62,16 +63,19 @@ export const documentApi = {
     try {
       // Remove undefined values
       const params = Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== undefined && v !== '')
+        Object.entries(filters).filter(([_, v]) => v !== undefined && v !== "")
       );
 
-      const response = await axios.get<SearchResponse>(`${API_BASE}/api/documents`, {
-        params
-      });
+      const response = await axios.get<SearchResponse>(
+        `${API_BASE}/api/documents`,
+        {
+          params,
+        }
+      );
 
       return response.data;
     } catch (error) {
-      console.error('Search error:', error);
+      console.error("Search error:", error);
       throw error;
     }
   },
@@ -83,16 +87,16 @@ export const documentApi = {
    */
   async uploadDocument(file: File): Promise<Document> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const response = await axios.post(`${API_BASE}/api/documents`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+        "Content-Type": "multipart/form-data",
+      },
     });
 
     return response.data;
-  }
+  },
 };
 ```
 
@@ -101,9 +105,9 @@ export const documentApi = {
 Create `src/hooks/useDocumentSearch.ts`:
 
 ```typescript
-import { useState, useEffect, useCallback } from 'react';
-import { documentApi } from '../services/api';
-import { SearchFilters, SearchResponse } from '../types/search';
+import { useState, useEffect, useCallback } from "react";
+import { documentApi } from "../services/api";
+import { SearchFilters, SearchResponse } from "../types/search";
 
 export function useDocumentSearch(initialFilters: SearchFilters = {}) {
   const [data, setData] = useState<SearchResponse | null>(null);
@@ -119,7 +123,7 @@ export function useDocumentSearch(initialFilters: SearchFilters = {}) {
       const result = await documentApi.searchDocuments(filters);
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+      setError(err instanceof Error ? err.message : "Search failed");
     } finally {
       setLoading(false);
     }
@@ -131,11 +135,11 @@ export function useDocumentSearch(initialFilters: SearchFilters = {}) {
   }, [search]);
 
   const updateFilters = useCallback((newFilters: Partial<SearchFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1
+    setFilters((prev) => ({ ...prev, ...newFilters, page: 1 })); // Reset to page 1
   }, []);
 
   const goToPage = useCallback((page: number) => {
-    setFilters(prev => ({ ...prev, page }));
+    setFilters((prev) => ({ ...prev, page }));
   }, []);
 
   const resetFilters = useCallback(() => {
@@ -151,7 +155,7 @@ export function useDocumentSearch(initialFilters: SearchFilters = {}) {
     updateFilters,
     goToPage,
     resetFilters,
-    refetch: search
+    refetch: search,
   };
 }
 ```
@@ -198,7 +202,7 @@ export function DocumentSearch() {
         {/* Category Filter */}
         <Select
           value={filters.category || 'all'}
-          onValueChange={(value) => 
+          onValueChange={(value) =>
             updateFilters({ category: value === 'all' ? undefined : value })
           }
         >
@@ -218,7 +222,7 @@ export function DocumentSearch() {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline">
-              {filters.start_date 
+              {filters.start_date
                 ? `From ${format(new Date(filters.start_date), 'PP')}`
                 : 'Select Date Range'}
             </Button>
@@ -279,12 +283,12 @@ export function DocumentSearch() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{doc.original_name}</h3>
                   <p className="text-sm text-gray-600 mt-1">{doc.text_preview}</p>
-                  
+
                   <div className="flex items-center gap-4 mt-3">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {doc.category}
                     </span>
-                    
+
                     <div className="flex gap-2">
                       {doc.tags.map((tag) => (
                         <span
@@ -297,7 +301,7 @@ export function DocumentSearch() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="text-sm text-gray-500">
                   {format(new Date(doc.created_at), 'MMM d, yyyy')}
                 </div>
@@ -324,11 +328,11 @@ export function DocumentSearch() {
           >
             Previous
           </Button>
-          
+
           <span className="text-sm">
             Page {pagination.page} of {pagination.pages}
           </span>
-          
+
           <Button
             variant="outline"
             disabled={!pagination.has_next}
@@ -358,7 +362,7 @@ export function Documents() {
     <div className="container mx-auto py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Documents</h1>
-        
+
         <Button>
           <Upload className="mr-2 h-4 w-4" />
           Upload Document
@@ -435,7 +439,7 @@ export function SearchWithSuggestions() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      
+
       {suggestions.length > 0 && (
         <div className="absolute z-10 w-full bg-white shadow-lg rounded mt-1">
           {suggestions.map((tag) => (
@@ -457,20 +461,20 @@ export function SearchWithSuggestions() {
 ### 3. URL State Management
 
 ```typescript
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from "react-router-dom";
 
 export function DocumentSearch() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = {
-    q: searchParams.get('q') || '',
-    category: searchParams.get('category') || '',
-    page: parseInt(searchParams.get('page') || '1')
+    q: searchParams.get("q") || "",
+    category: searchParams.get("category") || "",
+    page: parseInt(searchParams.get("page") || "1"),
   };
 
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
     const params = new URLSearchParams(searchParams);
-    
+
     Object.entries(newFilters).forEach(([key, value]) => {
       if (value) {
         params.set(key, String(value));
@@ -565,7 +569,7 @@ describe('DocumentSearch', () => {
 
   it('updates search query', async () => {
     render(<DocumentSearch />);
-    
+
     const input = screen.getByPlaceholderText('Search documents...');
     fireEvent.change(input, { target: { value: 'invoice' } });
 
@@ -641,6 +645,7 @@ CORS(app, origins=['http://localhost:5173'])  # Vite default port
 ## Next Steps
 
 1. **Install dependencies:**
+
    ```bash
    npm install axios date-fns
    ```
@@ -654,15 +659,19 @@ CORS(app, origins=['http://localhost:5173'])  # Vite default port
 ## Troubleshooting
 
 ### Issue: CORS errors
+
 **Solution:** Verify Flask CORS configuration includes your frontend URL
 
 ### Issue: Slow searches
+
 **Solution:** Implement debounced search (see Advanced Features #1)
 
 ### Issue: Pagination not working
+
 **Solution:** Check that `page` parameter is being sent correctly
 
 ### Issue: Date filters not working
+
 **Solution:** Verify date format is YYYY-MM-DD
 
 ## Performance Tips

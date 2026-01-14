@@ -12,8 +12,9 @@ python migrate_task_values.py
 ```
 
 This will convert:
+
 - `Todo` → `pending`
-- `InProgress` → `in_progress`  
+- `InProgress` → `in_progress`
 - `Done` → `completed`
 - `Low` → `low`
 - `Medium` → `medium`
@@ -50,6 +51,7 @@ python test_task_api_complete.py
 ### Creating Tasks
 
 #### From the Tasks Page:
+
 1. Navigate to `/tasks`
 2. Click "Add Task" button
 3. Fill in:
@@ -62,6 +64,7 @@ python test_task_api_complete.py
 4. Click "Save"
 
 #### From a Document:
+
 1. View a document in the Documents page
 2. Click "Create Task" in the document sidebar
 3. The document will be automatically linked
@@ -70,6 +73,7 @@ python test_task_api_complete.py
 ### Viewing Tasks
 
 Tasks are automatically grouped into:
+
 - **Overdue** - Past due date, not completed (red border)
 - **Today** - Due today (yellow border)
 - **Upcoming** - Due in the future
@@ -84,6 +88,7 @@ Tasks are automatically grouped into:
 ### Filtering Tasks
 
 Use the filter dropdown to show:
+
 - All tasks
 - Only pending
 - Only in progress
@@ -92,6 +97,7 @@ Use the filter dropdown to show:
 ### Dashboard Integration
 
 The Dashboard shows:
+
 - **Open Tasks Count** - Total pending + in_progress
 - **Upcoming Deadlines** - Tasks due in next 7 days
 - **High Priority Tasks** - Urgent tasks requiring attention
@@ -99,6 +105,7 @@ The Dashboard shows:
 ## 🌐 Bilingual Support
 
 To switch language:
+
 1. Click the language toggle in the navigation bar
 2. All task labels will update to Sinhala or English
 
@@ -108,11 +115,13 @@ All labels use `t('tasks.pending')` format, making translation easy.
 ## 🔗 Linking Tasks to Documents
 
 ### Why Link Tasks?
+
 - Track follow-up actions for specific documents
 - See all tasks related to a contract, invoice, or report
 - Better context when reviewing tasks
 
 ### How It Works:
+
 1. When creating a task, select a document from the dropdown
 2. The document name will appear as a badge on the task
 3. Filter tasks by document using the API: `GET /api/tasks?document_id=5`
@@ -120,6 +129,7 @@ All labels use `t('tasks.pending')` format, making translation easy.
 ## 📊 API Quick Reference
 
 ### Create Task
+
 ```bash
 curl -X POST http://localhost:5001/api/tasks \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -133,18 +143,21 @@ curl -X POST http://localhost:5001/api/tasks \
 ```
 
 ### Get All Tasks
+
 ```bash
 curl -X GET "http://localhost:5001/api/tasks" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Filter by Status
+
 ```bash
 curl -X GET "http://localhost:5001/api/tasks?status=pending" \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Update Task
+
 ```bash
 curl -X PATCH http://localhost:5001/api/tasks/1 \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -153,12 +166,14 @@ curl -X PATCH http://localhost:5001/api/tasks/1 \
 ```
 
 ### Delete Task
+
 ```bash
 curl -X DELETE http://localhost:5001/api/tasks/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### Get Upcoming Tasks
+
 ```bash
 curl -X GET "http://localhost:5001/api/tasks/upcoming?days=3" \
   -H "Authorization: Bearer YOUR_TOKEN"
@@ -167,22 +182,26 @@ curl -X GET "http://localhost:5001/api/tasks/upcoming?days=3" \
 ## 🐛 Troubleshooting
 
 ### Tasks Not Showing
+
 1. Check browser console for errors
 2. Verify Flask server is running on port 5001
 3. Check JWT token is valid (login again)
 4. Check Network tab in DevTools for API responses
 
 ### Status/Priority Not Updating
+
 1. Ensure you're using lowercase values: `pending`, not `Pending`
 2. Check backend logs for validation errors
 3. Run migration script if using old data format
 
 ### Document Linking Not Working
+
 1. Verify document exists and belongs to current user
 2. Check document ID is a valid integer
 3. Backend validates document ownership before linking
 
 ### CORS Errors
+
 1. Check Flask app has CORS enabled for localhost:8081
 2. Verify `supports_credentials=True` in CORS config
 3. Restart Flask server after config changes
@@ -251,6 +270,7 @@ All requirements from the specification are implemented:
 ## 📞 Support
 
 If you encounter issues:
+
 1. Check [TASK_SECTION_FIX_SUMMARY.md](./TASK_SECTION_FIX_SUMMARY.md) for detailed technical documentation
 2. Review Flask server logs for backend errors
 3. Check browser console for frontend errors

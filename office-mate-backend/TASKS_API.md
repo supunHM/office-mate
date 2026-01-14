@@ -1,6 +1,7 @@
 # Tasks API Documentation
 
 ## Overview
+
 The Tasks API provides endpoints for managing tasks with support for linking to documents, filtering, and status tracking.
 
 **Base URL**: `http://localhost:5001`
@@ -12,17 +13,20 @@ The Tasks API provides endpoints for managing tasks with support for linking to 
 ## Endpoints
 
 ### 1. Create Task
+
 **POST** `/api/tasks`
 
 Create a new task with optional document linking.
 
 **Headers**:
+
 ```
 Authorization: Bearer <your_jwt_token>
 Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "title": "Review contract",
@@ -35,6 +39,7 @@ Content-Type: application/json
 ```
 
 **Fields**:
+
 - `title` (required): Task title (string)
 - `description` (optional): Task description (string)
 - `priority` (optional): One of: `Low`, `Medium`, `High`, `Urgent` (default: `Low`)
@@ -43,6 +48,7 @@ Content-Type: application/json
 - `document_id` (optional): Link to a document (integer)
 
 **Response** (201 Created):
+
 ```json
 {
   "id": 1,
@@ -58,6 +64,7 @@ Content-Type: application/json
 ```
 
 **Error Responses**:
+
 - `400 Bad Request`: Missing required fields or invalid data
 - `401 Unauthorized`: Missing or invalid authentication token
 - `404 Not Found`: Document not found or access denied
@@ -65,19 +72,23 @@ Content-Type: application/json
 ---
 
 ### 2. Get Upcoming Tasks
+
 **GET** `/api/tasks/upcoming`
 
 Get tasks due within the next 2 days (excludes completed tasks).
 
 **Headers**:
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
 **Query Parameters**:
+
 - `days` (optional): Number of days to look ahead (default: 2, max: 30)
 
 **Response** (200 OK):
+
 ```json
 {
   "tasks": [
@@ -105,6 +116,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Usage Examples**:
+
 ```bash
 # Get tasks due in next 2 days (default)
 curl -H "Authorization: Bearer <token>" http://localhost:5001/api/tasks/upcoming
@@ -116,16 +128,19 @@ curl -H "Authorization: Bearer <token>" http://localhost:5001/api/tasks/upcoming
 ---
 
 ### 3. List Tasks
+
 **GET** `/api/tasks`
 
 Get all tasks for the authenticated user with optional filters.
 
 **Headers**:
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
 **Query Parameters**:
+
 - `status` (optional): Filter by status (`Todo`, `InProgress`, `Done`)
 - `due_from` (optional): Tasks due from this date (`YYYY-MM-DD`)
 - `due_to` (optional): Tasks due until this date (`YYYY-MM-DD`)
@@ -134,6 +149,7 @@ Authorization: Bearer <your_jwt_token>
 - `per_page` (optional): Items per page (default: 50, max: 100)
 
 **Examples**:
+
 ```
 GET /api/tasks
 GET /api/tasks?status=Todo
@@ -143,6 +159,7 @@ GET /api/tasks?status=InProgress&page=1&per_page=20
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "tasks": [
@@ -184,22 +201,26 @@ GET /api/tasks?status=InProgress&page=1&per_page=20
 ```
 
 **Error Responses**:
+
 - `400 Bad Request`: Invalid query parameters
 - `401 Unauthorized`: Missing or invalid authentication token
 
 ---
 
 ### 3. Get Single Task
+
 **GET** `/api/tasks/<task_id>`
 
 Get details of a specific task.
 
 **Headers**:
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -220,23 +241,27 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Error Responses**:
+
 - `401 Unauthorized`: Missing or invalid authentication token
 - `404 Not Found`: Task not found
 
 ---
 
 ### 4. Update Task
+
 **PATCH** `/api/tasks/<task_id>`
 
 Update an existing task. All fields are optional.
 
 **Headers**:
+
 ```
 Authorization: Bearer <your_jwt_token>
 Content-Type: application/json
 ```
 
 **Request Body** (all fields optional):
+
 ```json
 {
   "status": "InProgress"
@@ -244,6 +269,7 @@ Content-Type: application/json
 ```
 
 Or update multiple fields:
+
 ```json
 {
   "title": "Review and finalize contract",
@@ -254,6 +280,7 @@ Or update multiple fields:
 ```
 
 To unlink a document:
+
 ```json
 {
   "document_id": null
@@ -261,6 +288,7 @@ To unlink a document:
 ```
 
 **Fields**:
+
 - `title`: New title (string)
 - `description`: New description (string)
 - `priority`: New priority (`Low`, `Medium`, `High`, `Urgent`)
@@ -269,6 +297,7 @@ To unlink a document:
 - `document_id`: Link to new document (integer) or `null` to unlink
 
 **Response** (200 OK):
+
 ```json
 {
   "id": 1,
@@ -284,6 +313,7 @@ To unlink a document:
 ```
 
 **Error Responses**:
+
 - `400 Bad Request`: Invalid data
 - `401 Unauthorized`: Missing or invalid authentication token
 - `404 Not Found`: Task or document not found
@@ -291,16 +321,19 @@ To unlink a document:
 ---
 
 ### 5. Delete Task
+
 **DELETE** `/api/tasks/<task_id>`
 
 Delete a task permanently.
 
 **Headers**:
+
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
 **Response** (200 OK):
+
 ```json
 {
   "message": "Task deleted successfully"
@@ -308,6 +341,7 @@ Authorization: Bearer <your_jwt_token>
 ```
 
 **Error Responses**:
+
 - `401 Unauthorized`: Missing or invalid authentication token
 - `404 Not Found`: Task not found
 
@@ -316,10 +350,12 @@ Authorization: Bearer <your_jwt_token>
 ## Common Workflows
 
 ### Create a task linked to a document
+
 1. Upload document using `POST /api/documents` (get document ID)
 2. Create task: `POST /api/tasks` with `document_id`
 
 ### Update task status
+
 ```bash
 curl -X PATCH http://localhost:5001/api/tasks/1 \
   -H "Authorization: Bearer <token>" \
@@ -328,12 +364,14 @@ curl -X PATCH http://localhost:5001/api/tasks/1 \
 ```
 
 ### Get all high-priority tasks due this week
+
 ```bash
 curl "http://localhost:5001/api/tasks?priority=High&due_from=2026-01-14&due_to=2026-01-20" \
   -H "Authorization: Bearer <token>"
 ```
 
 ### Get all tasks linked to a specific document
+
 ```bash
 curl "http://localhost:5001/api/tasks?document_id=1" \
   -H "Authorization: Bearer <token>"
@@ -344,6 +382,7 @@ curl "http://localhost:5001/api/tasks?document_id=1" \
 ## Data Models
 
 ### Task Object
+
 ```typescript
 {
   id: number;
@@ -368,6 +407,7 @@ curl "http://localhost:5001/api/tasks?document_id=1" \
 ## Postman Collection
 
 ### 1. Create Task
+
 ```
 POST http://localhost:5001/api/tasks
 Headers:
@@ -383,6 +423,7 @@ Body (raw JSON):
 ```
 
 ### 2. List All Tasks
+
 ```
 GET http://localhost:5001/api/tasks
 Headers:
@@ -390,6 +431,7 @@ Headers:
 ```
 
 ### 3. Update Task Status
+
 ```
 PATCH http://localhost:5001/api/tasks/1
 Headers:
@@ -402,6 +444,7 @@ Body (raw JSON):
 ```
 
 ### 4. Delete Task
+
 ```
 DELETE http://localhost:5001/api/tasks/1
 Headers:
@@ -413,11 +456,13 @@ Headers:
 ## Performance Notes
 
 The tasks table has the following indexes for optimal query performance:
+
 - Composite index on `(user_id, status)` for filtering by status
 - Composite index on `(user_id, due_date)` for date range queries
 - Individual indexes on `document_id`, `created_at`, `status`, `due_date`
 
 Tasks are ordered by:
+
 1. Due date (ascending, nulls last)
 2. Created date (descending)
 

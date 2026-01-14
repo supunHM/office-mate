@@ -1,6 +1,7 @@
 # Office Mate API - Complete Route Reference
 
 ## Base URL
+
 `http://localhost:8000`
 
 ---
@@ -8,7 +9,9 @@
 ## 🔐 Authentication Routes (`/auth`)
 
 ### 1. Register User
+
 **POST** `/auth/register`
+
 ```json
 Request Body:
 {
@@ -23,7 +26,9 @@ Response: UserRead (201 Created)
 ```
 
 ### 2. Login
+
 **POST** `/auth/login`
+
 ```
 Form Data:
 - username: string
@@ -37,8 +42,11 @@ Response:
 ```
 
 ### 3. Get Current User
+
 **GET** `/auth/me`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Response: UserRead
 {
@@ -54,8 +62,11 @@ Response: UserRead
 ```
 
 ### 4. Update Current User
+
 **PUT** `/auth/me`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Request Body:
 {
@@ -69,7 +80,9 @@ Response: UserRead
 ```
 
 ### 5. Logout
+
 **POST** `/auth/logout`
+
 - **Auth Required**: Bearer Token
 - Client-side token removal
 
@@ -78,9 +91,12 @@ Response: UserRead
 ## 📄 Document Routes (`/documents`)
 
 ### 1. Upload Document
+
 **POST** `/documents/`
+
 - **Auth Required**: Bearer Token
 - **Content-Type**: multipart/form-data
+
 ```
 Form Data:
 - file: File (PDF, Word, Image)
@@ -92,7 +108,9 @@ Response: DocumentRead (201 Created)
 ```
 
 ### 2. List Documents
+
 **GET** `/documents/`
+
 - **Auth Required**: Bearer Token
 - **Query Parameters**:
   - `query` (optional): Search term
@@ -117,15 +135,21 @@ Response: List[DocumentListRead]
 ```
 
 ### 3. Get Document Details
+
 **GET** `/documents/{document_id}`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Response: DocumentRead (includes full content)
 ```
 
 ### 4. Update Document
+
 **PUT** `/documents/{document_id}`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Request Body:
 {
@@ -137,16 +161,22 @@ Response: DocumentRead
 ```
 
 ### 5. Delete Document
+
 **DELETE** `/documents/{document_id}`
+
 - **Auth Required**: Bearer Token
 - Deletes file from storage
 
 ### 6. Add Tag to Document
+
 **POST** `/documents/{document_id}/tags/{tag_id}`
+
 - **Auth Required**: Bearer Token
 
 ### 7. Remove Tag from Document
+
 **DELETE** `/documents/{document_id}/tags/{tag_id}`
+
 - **Auth Required**: Bearer Token
 
 ---
@@ -154,8 +184,11 @@ Response: DocumentRead
 ## ✅ Task Routes (`/tasks`)
 
 ### 1. Create Task
+
 **POST** `/tasks/`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Request Body:
 {
@@ -173,7 +206,9 @@ Response: TaskRead (201 Created)
 ```
 
 ### 2. List Tasks
+
 **GET** `/tasks/`
+
 - **Auth Required**: Bearer Token
 - **Query Parameters**:
   - `status` (optional): Todo, InProgress, Done
@@ -187,12 +222,17 @@ Response: List[TaskRead]
 ```
 
 ### 3. Get Task Details
+
 **GET** `/tasks/{task_id}`
+
 - **Auth Required**: Bearer Token
 
 ### 4. Update Task
+
 **PATCH** `/tasks/{task_id}`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Request Body (all optional):
 {
@@ -208,7 +248,9 @@ Response: TaskRead
 ```
 
 ### 5. Delete Task
+
 **DELETE** `/tasks/{task_id}`
+
 - **Auth Required**: Bearer Token
 
 ---
@@ -216,8 +258,11 @@ Response: TaskRead
 ## 🏷️ Tag Routes (`/tags`)
 
 ### 1. Create Tag
+
 **POST** `/tags/`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Request Body:
 {
@@ -230,19 +275,27 @@ Response: TagRead (201 Created)
 ```
 
 ### 2. List All Tags
+
 **GET** `/tags/`
+
 - **Auth Required**: Bearer Token
 
 ### 3. Get Tag Details
+
 **GET** `/tags/{tag_id}`
+
 - **Auth Required**: Bearer Token
 
 ### 4. Update Tag
+
 **PUT** `/tags/{tag_id}`
+
 - **Auth Required**: Bearer Token
 
 ### 5. Delete Tag
+
 **DELETE** `/tags/{tag_id}`
+
 - **Auth Required**: Bearer Token
 
 ---
@@ -250,8 +303,11 @@ Response: TagRead (201 Created)
 ## 📊 Statistics Routes (`/stats`)
 
 ### 1. Dashboard Statistics
+
 **GET** `/stats/dashboard`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Response:
 {
@@ -277,8 +333,11 @@ Response:
 ```
 
 ### 2. Document Statistics
+
 **GET** `/stats/documents`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Response:
 {
@@ -291,8 +350,11 @@ Response:
 ```
 
 ### 3. Task Statistics
+
 **GET** `/stats/tasks`
+
 - **Auth Required**: Bearer Token
+
 ```json
 Response:
 {
@@ -315,6 +377,7 @@ Response:
 All routes except `/auth/register` and `/auth/login` require authentication.
 
 ### How to Authenticate:
+
 1. Register or login to get an access token
 2. Include token in request headers:
    ```
@@ -322,6 +385,7 @@ All routes except `/auth/register` and `/auth/login` require authentication.
    ```
 
 ### Example (curl):
+
 ```bash
 curl -X GET http://localhost:8000/documents/ \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -332,6 +396,7 @@ curl -X GET http://localhost:8000/documents/ \
 ## 📁 Document Categories
 
 Predefined categories:
+
 - **Finance**: Financial documents, invoices, receipts
 - **HR**: Human resources, employee records
 - **Procurement**: Purchase orders, vendor contracts
@@ -343,12 +408,14 @@ Predefined categories:
 ## ⚙️ Task Configuration
 
 ### Priorities:
+
 - Low
 - Medium
 - High
 - Urgent
 
 ### Statuses:
+
 - Todo
 - InProgress
 - Done
@@ -381,5 +448,6 @@ OCR supports both languages for document text extraction.
 ## 🔍 Interactive API Documentation
 
 Visit these URLs when the server is running:
+
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc

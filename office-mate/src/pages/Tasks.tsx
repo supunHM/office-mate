@@ -1,6 +1,6 @@
 /**
  * Tasks Page Component
- * 
+ *
  * REPORT REQUIREMENTS IMPLEMENTATION:
  * - Smart to-do list integrated with document organizer
  * - Create, update, and track tasks with priority levels (low, medium, high, urgent)
@@ -11,45 +11,45 @@
  * - Quick status updates via checkbox toggle
  * - Bilingual UI support (Sinhala-English) via LanguageContext
  * - Better task visibility compared to manual methods through smart grouping
- * 
+ *
  * All hard-coded strings are centralized via t() function for easy translation.
  */
-import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Filter, 
-  CheckSquare, 
-  Clock, 
-  Edit2, 
+import React, { useState, useEffect } from "react";
+import {
+  Plus,
+  Filter,
+  CheckSquare,
+  Clock,
+  Edit2,
   Trash2,
   FileText,
   Bell,
   AlertCircle,
   CheckCircle2,
   Circle,
-  Loader2
-} from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+  Loader2,
+} from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,10 +59,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { tasksApi, documentsApi, Task, Document } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
-import { format, parseISO, isAfter, isBefore, addDays } from 'date-fns';
+} from "@/components/ui/alert-dialog";
+import { tasksApi, documentsApi, Task, Document } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { format, parseISO, isAfter, isBefore, addDays } from "date-fns";
 
 const Tasks: React.FC = () => {
   const { t, language } = useLanguage();
@@ -71,19 +71,19 @@ const Tasks: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteTask, setDeleteTask] = useState<Task | null>(null);
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: 'pending' as Task['status'],
-    priority: 'medium' as Task['priority'],
-    dueDate: '',
-    documentId: '',
-    reminder: '',
+    title: "",
+    description: "",
+    status: "pending" as Task["status"],
+    priority: "medium" as Task["priority"],
+    dueDate: "",
+    documentId: "",
+    reminder: "",
   });
 
   // Fetch data on mount
@@ -93,16 +93,19 @@ const Tasks: React.FC = () => {
       try {
         const [tasksData, docsData] = await Promise.all([
           tasksApi.getAll(),
-          documentsApi.getAll()
+          documentsApi.getAll(),
         ]);
         setTasks(tasksData);
         setDocuments(docsData);
       } catch (error) {
-        console.error('Failed to fetch tasks:', error);
+        console.error("Failed to fetch tasks:", error);
         toast({
-          title: language === 'en' ? 'Error' : 'දෝෂයක්',
-          description: language === 'en' ? 'Failed to load tasks' : 'කාර්යයන් පූරණය කිරීමට අසමත් විය',
-          variant: 'destructive'
+          title: language === "en" ? "Error" : "දෝෂයක්",
+          description:
+            language === "en"
+              ? "Failed to load tasks"
+              : "කාර්යයන් පූරණය කිරීමට අසමත් විය",
+          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
@@ -112,16 +115,16 @@ const Tasks: React.FC = () => {
   }, [language, toast]);
 
   const statusOptions = [
-    { value: 'all', label: t('tasks.all') },
-    { value: 'pending', label: t('tasks.pending') },
-    { value: 'in_progress', label: t('tasks.inProgress') },
-    { value: 'completed', label: t('tasks.completed') },
+    { value: "all", label: t("tasks.all") },
+    { value: "pending", label: t("tasks.pending") },
+    { value: "in_progress", label: t("tasks.inProgress") },
+    { value: "completed", label: t("tasks.completed") },
   ];
 
   const priorityColors = {
-    high: 'bg-destructive text-destructive-foreground',
-    medium: 'bg-warning text-warning-foreground',
-    low: 'bg-muted text-muted-foreground',
+    high: "bg-destructive text-destructive-foreground",
+    medium: "bg-warning text-warning-foreground",
+    low: "bg-muted text-muted-foreground",
   };
 
   const statusIcons = {
@@ -130,25 +133,31 @@ const Tasks: React.FC = () => {
     completed: CheckCircle2,
   };
 
-  const filteredTasks = tasks.filter(task => 
-    statusFilter === 'all' || task.status === statusFilter
+  const filteredTasks = tasks.filter(
+    (task) => statusFilter === "all" || task.status === statusFilter
   );
 
   const groupedTasks = {
-    overdue: filteredTasks.filter(t => 
-      t.dueDate && isBefore(parseISO(t.dueDate), new Date()) && t.status !== 'completed'
+    overdue: filteredTasks.filter(
+      (t) =>
+        t.dueDate &&
+        isBefore(parseISO(t.dueDate), new Date()) &&
+        t.status !== "completed"
     ),
-    today: filteredTasks.filter(t => {
-      if (!t.dueDate || t.status === 'completed') return false;
+    today: filteredTasks.filter((t) => {
+      if (!t.dueDate || t.status === "completed") return false;
       const due = parseISO(t.dueDate);
-      return format(due, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
+      return format(due, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
     }),
-    upcoming: filteredTasks.filter(t => {
-      if (!t.dueDate || t.status === 'completed') return false;
+    upcoming: filteredTasks.filter((t) => {
+      if (!t.dueDate || t.status === "completed") return false;
       const due = parseISO(t.dueDate);
-      return isAfter(due, new Date()) && format(due, 'yyyy-MM-dd') !== format(new Date(), 'yyyy-MM-dd');
+      return (
+        isAfter(due, new Date()) &&
+        format(due, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd")
+      );
     }),
-    completed: filteredTasks.filter(t => t.status === 'completed'),
+    completed: filteredTasks.filter((t) => t.status === "completed"),
   };
 
   const openForm = (task?: Task) => {
@@ -156,23 +165,23 @@ const Tasks: React.FC = () => {
       setEditingTask(task);
       setFormData({
         title: task.title,
-        description: task.description || '',
+        description: task.description || "",
         status: task.status,
         priority: task.priority,
-        dueDate: task.dueDate || '',
-        documentId: task.documentId || '',
-        reminder: task.reminder || '',
+        dueDate: task.dueDate || "",
+        documentId: task.documentId || "",
+        reminder: task.reminder || "",
       });
     } else {
       setEditingTask(null);
       setFormData({
-        title: '',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-        dueDate: '',
-        documentId: '',
-        reminder: '',
+        title: "",
+        description: "",
+        status: "pending",
+        priority: "medium",
+        dueDate: "",
+        documentId: "",
+        reminder: "",
       });
     }
     setIsFormOpen(true);
@@ -182,9 +191,12 @@ const Tasks: React.FC = () => {
     // REPORT REQUIREMENT: Validate task title is required
     if (!formData.title.trim()) {
       toast({
-        title: language === 'en' ? 'Error' : 'දෝෂය',
-        description: language === 'en' ? 'Task title is required' : 'කාර්ය මාතෘකාව අවශ්‍යයි',
-        variant: 'destructive',
+        title: language === "en" ? "Error" : "දෝෂය",
+        description:
+          language === "en"
+            ? "Task title is required"
+            : "කාර්ය මාතෘකාව අවශ්‍යයි",
+        variant: "destructive",
       });
       return;
     }
@@ -201,14 +213,15 @@ const Tasks: React.FC = () => {
           dueDate: formData.dueDate || undefined,
           documentId: formData.documentId || undefined,
         });
-        
+
         // Update local state
-        setTasks(prev => prev.map(t => 
-          t.id === editingTask.id ? updatedTask : t
-        ));
-        
+        setTasks((prev) =>
+          prev.map((t) => (t.id === editingTask.id ? updatedTask : t))
+        );
+
         toast({
-          title: language === 'en' ? 'Task updated' : 'කාර්යය යාවත්කාලීන කරන ලදී',
+          title:
+            language === "en" ? "Task updated" : "කාර්යය යාවත්කාලීන කරන ලදී",
         });
       } else {
         // Create new task - REPORT REQUIREMENT: Users can create tasks
@@ -220,22 +233,25 @@ const Tasks: React.FC = () => {
           dueDate: formData.dueDate || undefined,
           documentId: formData.documentId || undefined,
         });
-        
+
         // Add to local state
-        setTasks(prev => [newTask, ...prev]);
-        
+        setTasks((prev) => [newTask, ...prev]);
+
         toast({
-          title: language === 'en' ? 'Task created' : 'කාර්යය නිර්මාණය කරන ලදී',
+          title: language === "en" ? "Task created" : "කාර්යය නිර්මාණය කරන ලදී",
         });
       }
 
       setIsFormOpen(false);
     } catch (error) {
-      console.error('Failed to save task:', error);
+      console.error("Failed to save task:", error);
       toast({
-        title: language === 'en' ? 'Error' : 'දෝෂයක්',
-        description: language === 'en' ? 'Failed to save task' : 'කාර්යය සුරැකීමට අසමත් විය',
-        variant: 'destructive',
+        title: language === "en" ? "Error" : "දෝෂයක්",
+        description:
+          language === "en"
+            ? "Failed to save task"
+            : "කාර්යය සුරැකීමට අසමත් විය",
+        variant: "destructive",
       });
     }
   };
@@ -245,62 +261,77 @@ const Tasks: React.FC = () => {
     if (deleteTask) {
       try {
         await tasksApi.delete(deleteTask.id);
-        
+
         // Remove from local state
-        setTasks(prev => prev.filter(t => t.id !== deleteTask.id));
-        
+        setTasks((prev) => prev.filter((t) => t.id !== deleteTask.id));
+
         toast({
-          title: language === 'en' ? 'Task deleted' : 'කාර්යය මකා දමන ලදී',
+          title: language === "en" ? "Task deleted" : "කාර්යය මකා දමන ලදී",
         });
-        
+
         setDeleteTask(null);
       } catch (error) {
-        console.error('Failed to delete task:', error);
+        console.error("Failed to delete task:", error);
         toast({
-          title: language === 'en' ? 'Error' : 'දෝෂයක්',
-          description: language === 'en' ? 'Failed to delete task' : 'කාර්යය මකා දැමීමට අසමත් විය',
-          variant: 'destructive',
+          title: language === "en" ? "Error" : "දෝෂයක්",
+          description:
+            language === "en"
+              ? "Failed to delete task"
+              : "කාර්යය මකා දැමීමට අසමත් විය",
+          variant: "destructive",
         });
       }
     }
   };
 
-  const handleStatusChange = async (taskId: string, newStatus: Task['status']) => {
+  const handleStatusChange = async (
+    taskId: string,
+    newStatus: Task["status"]
+  ) => {
     // REPORT REQUIREMENT: Quick status updates for better task tracking
     try {
       await tasksApi.update(taskId, { status: newStatus });
-      
+
       // Update local state
-      setTasks(prev => prev.map(t => 
-        t.id === taskId ? { ...t, status: newStatus } : t
-      ));
-      
+      setTasks((prev) =>
+        prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+      );
+
       toast({
-        title: language === 'en' ? 'Status updated' : 'තත්ත්වය යාවත්කාලීන කරන ලදී',
+        title:
+          language === "en" ? "Status updated" : "තත්ත්වය යාවත්කාලීන කරන ලදී",
       });
     } catch (error) {
-      console.error('Failed to update status:', error);
+      console.error("Failed to update status:", error);
       toast({
-        title: language === 'en' ? 'Error' : 'දෝෂයක්',
-        description: language === 'en' ? 'Failed to update status' : 'තත්ත්වය යාවත්කාලීන කිරීමට අසමත් විය',
-        variant: 'destructive',
+        title: language === "en" ? "Error" : "දෝෂයක්",
+        description:
+          language === "en"
+            ? "Failed to update status"
+            : "තත්ත්වය යාවත්කාලීන කිරීමට අසමත් විය",
+        variant: "destructive",
       });
     }
   };
 
-  const TaskSection = ({ title, tasks, icon: Icon, variant }: { 
-    title: string; 
-    tasks: Task[]; 
+  const TaskSection = ({
+    title,
+    tasks,
+    icon: Icon,
+    variant,
+  }: {
+    title: string;
+    tasks: Task[];
     icon: React.ElementType;
-    variant?: 'danger' | 'warning' | 'success' | 'default';
+    variant?: "danger" | "warning" | "success" | "default";
   }) => {
     if (tasks.length === 0) return null;
 
     const variantStyles = {
-      danger: 'border-destructive/20 bg-destructive/5',
-      warning: 'border-warning/20 bg-warning/5',
-      success: 'border-success/20 bg-success/5',
-      default: '',
+      danger: "border-destructive/20 bg-destructive/5",
+      warning: "border-warning/20 bg-warning/5",
+      success: "border-success/20 bg-success/5",
+      default: "",
     };
 
     return (
@@ -313,47 +344,55 @@ const Tasks: React.FC = () => {
           {tasks.map((task) => {
             const StatusIcon = statusIcons[task.status];
             return (
-              <Card 
-                key={task.id} 
-                className={`card-shadow transition-all hover:card-shadow-lg ${variant ? variantStyles[variant] : ''}`}
+              <Card
+                key={task.id}
+                className={`card-shadow transition-all hover:card-shadow-lg ${variant ? variantStyles[variant] : ""}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <button
-                      onClick={() => handleStatusChange(
-                        task.id, 
-                        task.status === 'completed' ? 'pending' : 'completed'
-                      )}
+                      onClick={() =>
+                        handleStatusChange(
+                          task.id,
+                          task.status === "completed" ? "pending" : "completed"
+                        )
+                      }
                       className="mt-0.5"
                     >
-                      <StatusIcon className={`w-5 h-5 transition-colors ${
-                        task.status === 'completed' 
-                          ? 'text-success' 
-                          : task.status === 'in_progress'
-                            ? 'text-warning'
-                            : 'text-muted-foreground hover:text-primary'
-                      }`} />
+                      <StatusIcon
+                        className={`w-5 h-5 transition-colors ${
+                          task.status === "completed"
+                            ? "text-success"
+                            : task.status === "in_progress"
+                              ? "text-warning"
+                              : "text-muted-foreground hover:text-primary"
+                        }`}
+                      />
                     </button>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`font-medium ${
-                          task.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'
-                        }`}>
+                        <p
+                          className={`font-medium ${
+                            task.status === "completed"
+                              ? "line-through text-muted-foreground"
+                              : "text-foreground"
+                          }`}
+                        >
                           {task.title}
                         </p>
                         <div className="flex items-center gap-1 shrink-0">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8"
                             onClick={() => openForm(task)}
                           >
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive"
                             onClick={() => setDeleteTask(task)}
                           >
@@ -361,7 +400,7 @@ const Tasks: React.FC = () => {
                           </Button>
                         </div>
                       </div>
-                      
+
                       {task.description && (
                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                           {task.description}
@@ -372,18 +411,20 @@ const Tasks: React.FC = () => {
                         <Badge className={priorityColors[task.priority]}>
                           {t(`tasks.${task.priority}`)}
                         </Badge>
-                        
+
                         {task.dueDate && (
                           <Badge variant="outline" className="gap-1">
                             <Clock className="w-3 h-3" />
-                            {format(parseISO(task.dueDate), 'MMM dd')}
+                            {format(parseISO(task.dueDate), "MMM dd")}
                           </Badge>
                         )}
-                        
+
                         {task.documentName && (
                           <Badge variant="secondary" className="gap-1">
                             <FileText className="w-3 h-3" />
-                            <span className="max-w-[120px] truncate">{task.documentName}</span>
+                            <span className="max-w-[120px] truncate">
+                              {task.documentName}
+                            </span>
                           </Badge>
                         )}
                       </div>
@@ -411,14 +452,17 @@ const Tasks: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('tasks.title')}</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            {t("tasks.title")}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            {tasks.filter(t => t.status !== 'completed').length} {language === 'en' ? 'open tasks' : 'විවෘත කාර්යයන්'}
+            {tasks.filter((t) => t.status !== "completed").length}{" "}
+            {language === "en" ? "open tasks" : "විවෘත කාර්යයන්"}
           </p>
         </div>
         <Button onClick={() => openForm()}>
           <Plus className="w-4 h-4 mr-2" />
-          {t('tasks.add')}
+          {t("tasks.add")}
         </Button>
       </div>
 
@@ -441,26 +485,26 @@ const Tasks: React.FC = () => {
 
       {/* Task Sections */}
       <div className="space-y-8">
-        <TaskSection 
-          title={t('common.overdue')} 
-          tasks={groupedTasks.overdue} 
+        <TaskSection
+          title={t("common.overdue")}
+          tasks={groupedTasks.overdue}
           icon={AlertCircle}
           variant="danger"
         />
-        <TaskSection 
-          title={t('common.today')} 
-          tasks={groupedTasks.today} 
+        <TaskSection
+          title={t("common.today")}
+          tasks={groupedTasks.today}
           icon={Clock}
           variant="warning"
         />
-        <TaskSection 
-          title={language === 'en' ? 'Upcoming' : 'ඉදිරි'} 
-          tasks={groupedTasks.upcoming} 
+        <TaskSection
+          title={language === "en" ? "Upcoming" : "ඉදිරි"}
+          tasks={groupedTasks.upcoming}
           icon={CheckSquare}
         />
-        <TaskSection 
-          title={t('tasks.completed')} 
-          tasks={groupedTasks.completed} 
+        <TaskSection
+          title={t("tasks.completed")}
+          tasks={groupedTasks.completed}
           icon={CheckCircle2}
           variant="success"
         />
@@ -469,7 +513,7 @@ const Tasks: React.FC = () => {
           <Card className="card-shadow">
             <CardContent className="py-12 text-center">
               <CheckSquare className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">{t('tasks.noTasks')}</p>
+              <p className="text-muted-foreground">{t("tasks.noTasks")}</p>
             </CardContent>
           </Card>
         )}
@@ -480,90 +524,134 @@ const Tasks: React.FC = () => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
-              {editingTask ? t('tasks.edit') : t('tasks.add')}
+              {editingTask ? t("tasks.edit") : t("tasks.add")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">{t('tasks.taskName')}</Label>
+              <Label htmlFor="title">{t("tasks.taskName")}</Label>
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder={language === 'en' ? 'Enter task name...' : 'කාර්ය නම ඇතුලත් කරන්න...'}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, title: e.target.value }))
+                }
+                placeholder={
+                  language === "en"
+                    ? "Enter task name..."
+                    : "කාර්ය නම ඇතුලත් කරන්න..."
+                }
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">{t('tasks.description')}</Label>
+              <Label htmlFor="description">{t("tasks.description")}</Label>
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder={language === 'en' ? 'Add description...' : 'විස්තරය එක් කරන්න...'}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                placeholder={
+                  language === "en"
+                    ? "Add description..."
+                    : "විස්තරය එක් කරන්න..."
+                }
                 rows={3}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('tasks.priority')}</Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, priority: v as Task['priority'] }))}
+                <Label>{t("tasks.priority")}</Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(v) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      priority: v as Task["priority"],
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="high">{t('tasks.high')}</SelectItem>
-                    <SelectItem value="medium">{t('tasks.medium')}</SelectItem>
-                    <SelectItem value="low">{t('tasks.low')}</SelectItem>
+                    <SelectItem value="high">{t("tasks.high")}</SelectItem>
+                    <SelectItem value="medium">{t("tasks.medium")}</SelectItem>
+                    <SelectItem value="low">{t("tasks.low")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>{t('tasks.status')}</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, status: v as Task['status'] }))}
+                <Label>{t("tasks.status")}</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(v) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: v as Task["status"],
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">{t('tasks.pending')}</SelectItem>
-                    <SelectItem value="in_progress">{t('tasks.inProgress')}</SelectItem>
-                    <SelectItem value="completed">{t('tasks.completed')}</SelectItem>
+                    <SelectItem value="pending">
+                      {t("tasks.pending")}
+                    </SelectItem>
+                    <SelectItem value="in_progress">
+                      {t("tasks.inProgress")}
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      {t("tasks.completed")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="dueDate">{t('tasks.dueDate')}</Label>
+              <Label htmlFor="dueDate">{t("tasks.dueDate")}</Label>
               <Input
                 id="dueDate"
                 type="date"
                 value={formData.dueDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, dueDate: e.target.value }))
+                }
               />
             </div>
 
             <div className="space-y-2">
-              <Label>{t('tasks.linkedDoc')}</Label>
-              <Select 
-                value={formData.documentId || 'none'} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, documentId: v === 'none' ? '' : v }))}
+              <Label>{t("tasks.linkedDoc")}</Label>
+              <Select
+                value={formData.documentId || "none"}
+                onValueChange={(v) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    documentId: v === "none" ? "" : v,
+                  }))
+                }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={language === 'en' ? 'Select a document...' : 'ලේඛනයක් තෝරන්න...'} />
+                  <SelectValue
+                    placeholder={
+                      language === "en"
+                        ? "Select a document..."
+                        : "ලේඛනයක් තෝරන්න..."
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
-                    {language === 'en' ? 'No document' : 'ලේඛනයක් නොමැත'}
+                    {language === "en" ? "No document" : "ලේඛනයක් නොමැත"}
                   </SelectItem>
                   {documents.map((doc) => (
                     <SelectItem key={doc.id} value={doc.id}>
@@ -577,24 +665,24 @@ const Tasks: React.FC = () => {
             <div className="space-y-2">
               <Label htmlFor="reminder" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
-                {t('tasks.reminder')}
+                {t("tasks.reminder")}
               </Label>
               <Input
                 id="reminder"
                 type="datetime-local"
                 value={formData.reminder}
-                onChange={(e) => setFormData(prev => ({ ...prev, reminder: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, reminder: e.target.value }))
+                }
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsFormOpen(false)}>
-              {t('tasks.cancel')}
+              {t("tasks.cancel")}
             </Button>
-            <Button onClick={handleSave}>
-              {t('tasks.save')}
-            </Button>
+            <Button onClick={handleSave}>{t("tasks.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -604,18 +692,21 @@ const Tasks: React.FC = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {language === 'en' ? 'Delete Task?' : 'කාර්යය මකන්නද?'}
+              {language === "en" ? "Delete Task?" : "කාර්යය මකන්නද?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {language === 'en' 
-                ? 'This action cannot be undone. The task will be permanently deleted.'
-                : 'මෙම ක්‍රියාව අහෝසි කළ නොහැක. කාර්යය ස්ථිරවම මකා දැමෙනු ඇත.'}
+              {language === "en"
+                ? "This action cannot be undone. The task will be permanently deleted."
+                : "මෙම ක්‍රියාව අහෝසි කළ නොහැක. කාර්යය ස්ථිරවම මකා දැමෙනු ඇත."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('tasks.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t('tasks.delete')}
+            <AlertDialogCancel>{t("tasks.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t("tasks.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

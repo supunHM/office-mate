@@ -28,6 +28,7 @@ python -c "from flask_app import app, db; app.app_context().push(); db.create_al
 ```
 
 Or run this script:
+
 ```python
 from flask_app import app
 from flask_models import db, User
@@ -36,7 +37,7 @@ from werkzeug.security import generate_password_hash
 with app.app_context():
     # Create tables
     db.create_all()
-    
+
     # Create test user
     user = User(
         username='testuser',
@@ -52,6 +53,7 @@ with app.app_context():
 ### 3. Train ML Classifier (Optional)
 
 Create `train_simple_classifier.py`:
+
 ```python
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
@@ -111,6 +113,7 @@ Server will run on: `http://localhost:5000`
 Upload and process a document with OCR, NLP, and ML classification.
 
 **Request:**
+
 - Method: `POST`
 - Content-Type: `multipart/form-data`
 - Fields:
@@ -118,6 +121,7 @@ Upload and process a document with OCR, NLP, and ML classification.
   - `user_id`: User ID (optional, defaults to 1)
 
 **Response:**
+
 ```json
 {
   "id": 1,
@@ -130,6 +134,7 @@ Upload and process a document with OCR, NLP, and ML classification.
 ```
 
 **Status Codes:**
+
 - `201`: Document created successfully
 - `400`: Bad request (no file, invalid type, text extraction failed)
 - `500`: Server error
@@ -181,25 +186,25 @@ print(response.json())
 ```javascript
 // Upload document
 const formData = new FormData();
-formData.append('file', fileInput.files[0]);
-formData.append('user_id', 1);
+formData.append("file", fileInput.files[0]);
+formData.append("user_id", 1);
 
-fetch('http://localhost:5000/api/documents', {
-  method: 'POST',
-  body: formData
+fetch("http://localhost:5000/api/documents", {
+  method: "POST",
+  body: formData,
 })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Document uploaded:', data);
-    console.log('Category:', data.category);
-    console.log('Tags:', data.tags);
+  .then((response) => response.json())
+  .then((data) => {
+    console.log("Document uploaded:", data);
+    console.log("Category:", data.category);
+    console.log("Tags:", data.tags);
   });
 
 // Get documents
-fetch('http://localhost:5000/api/documents?user_id=1')
-  .then(response => response.json())
-  .then(documents => {
-    console.log('Documents:', documents);
+fetch("http://localhost:5000/api/documents?user_id=1")
+  .then((response) => response.json())
+  .then((documents) => {
+    console.log("Documents:", documents);
   });
 ```
 
@@ -258,13 +263,16 @@ fetch('http://localhost:5000/api/documents?user_id=1')
 ### Fallback Mechanisms
 
 If ML model not found:
+
 - Uses keyword-based classification
 
 If spaCy not found:
+
 - Uses simple word frequency for tags
 - Basic text preprocessing
 
 If OCR fails on PDF:
+
 - Tries image OCR (for scanned PDFs)
 
 ---
@@ -304,6 +312,7 @@ Max file size: 10 MB
 **Important**: The current implementation uses `user_id` from form data for testing.
 
 For production:
+
 1. Implement proper authentication (Flask-Login or JWT)
 2. Extract `user_id` from session/token
 3. Validate user permissions
@@ -311,6 +320,7 @@ For production:
 5. Scan uploaded files for malware
 
 Example with Flask-Login:
+
 ```python
 from flask_login import login_required, current_user
 
@@ -326,11 +336,13 @@ def upload_document():
 ## 🐛 Troubleshooting
 
 ### 1. "spaCy model not found"
+
 ```bash
 python -m spacy download en_core_web_sm
 ```
 
 ### 2. "Tesseract not found"
+
 ```bash
 # macOS
 brew install tesseract
@@ -340,16 +352,19 @@ sudo apt-get install tesseract-ocr
 ```
 
 ### 3. "No text extracted from PDF"
+
 - PDF might be scanned/image-based
 - API will automatically try OCR
 - Ensure Tesseract is installed
 
 ### 4. "Import error: No module named 'docx'"
+
 ```bash
 pip install python-docx
 ```
 
 ### 5. Database errors
+
 ```bash
 # Reset database
 rm office_mate.db
@@ -365,32 +380,35 @@ The API is designed to work with your existing React frontend at `http://localho
 ### Frontend Integration Steps:
 
 1. **Update API base URL** in your frontend:
+
 ```javascript
-const API_BASE = 'http://localhost:5000';
+const API_BASE = "http://localhost:5000";
 ```
 
 2. **Create upload function**:
+
 ```javascript
 async function uploadDocument(file) {
   const formData = new FormData();
-  formData.append('file', file);
-  
+  formData.append("file", file);
+
   const response = await fetch(`${API_BASE}/api/documents`, {
-    method: 'POST',
+    method: "POST",
     body: formData,
     // Add auth headers if needed
   });
-  
+
   return response.json();
 }
 ```
 
 3. **Display results**:
+
 ```javascript
 const result = await uploadDocument(selectedFile);
-console.log('Category:', result.category);
-console.log('Tags:', result.tags);
-console.log('Summary:', result.summary);
+console.log("Category:", result.category);
+console.log("Tags:", result.tags);
+console.log("Summary:", result.summary);
 ```
 
 ---
@@ -401,13 +419,7 @@ console.log('Summary:', result.summary);
 {
   "id": 1,
   "category": "Finance",
-  "tags": [
-    "invoice",
-    "payment",
-    "ABC Company",
-    "services",
-    "amount"
-  ],
+  "tags": ["invoice", "payment", "ABC Company", "services", "amount"],
   "summary": "Invoice for payment of services rendered. Amount due: $5,000. Payment terms: Net 30 days.",
   "filename": "invoice_2024.pdf",
   "created_at": "2026-01-14T10:30:45.123456"

@@ -1,6 +1,7 @@
 # Search API Quick Reference
 
 ## Endpoint
+
 ```
 GET /api/documents
 ```
@@ -8,6 +9,7 @@ GET /api/documents
 ## Quick Examples
 
 ### 1. Basic Search
+
 ```bash
 # Get all documents
 curl "http://localhost:5000/api/documents?user_id=1"
@@ -17,11 +19,13 @@ curl "http://localhost:5000/api/documents?user_id=1&q=invoice"
 ```
 
 ### 2. Filter by Category
+
 ```bash
 curl "http://localhost:5000/api/documents?user_id=1&category=Finance"
 ```
 
 ### 3. Filter by Date
+
 ```bash
 # Single date boundary
 curl "http://localhost:5000/api/documents?user_id=1&start_date=2024-01-01"
@@ -31,6 +35,7 @@ curl "http://localhost:5000/api/documents?user_id=1&start_date=2024-01-01&end_da
 ```
 
 ### 4. Pagination
+
 ```bash
 # Page 1, 10 items
 curl "http://localhost:5000/api/documents?user_id=1&page=1&per_page=10"
@@ -40,23 +45,25 @@ curl "http://localhost:5000/api/documents?user_id=1&page=2&per_page=10"
 ```
 
 ### 5. Combined Filters
+
 ```bash
 curl "http://localhost:5000/api/documents?user_id=1&q=budget&category=Finance&start_date=2024-01-01&end_date=2024-12-31&page=1&per_page=20"
 ```
 
 ## Parameters Cheat Sheet
 
-| Param | Type | Example | Description |
-|-------|------|---------|-------------|
-| `q` | string | `invoice` | Keyword search |
-| `category` | string | `Finance` | Filter by category |
-| `start_date` | date | `2024-01-01` | From date (YYYY-MM-DD) |
-| `end_date` | date | `2024-12-31` | To date (YYYY-MM-DD) |
-| `page` | int | `1` | Page number |
-| `per_page` | int | `20` | Items per page (max 100) |
-| `user_id` | int | `1` | User ID |
+| Param        | Type   | Example      | Description              |
+| ------------ | ------ | ------------ | ------------------------ |
+| `q`          | string | `invoice`    | Keyword search           |
+| `category`   | string | `Finance`    | Filter by category       |
+| `start_date` | date   | `2024-01-01` | From date (YYYY-MM-DD)   |
+| `end_date`   | date   | `2024-12-31` | To date (YYYY-MM-DD)     |
+| `page`       | int    | `1`          | Page number              |
+| `per_page`   | int    | `20`         | Items per page (max 100) |
+| `user_id`    | int    | `1`          | User ID                  |
 
 ## Response Structure
+
 ```json
 {
   "documents": [
@@ -81,15 +88,18 @@ curl "http://localhost:5000/api/documents?user_id=1&q=budget&category=Finance&st
 ```
 
 ## Categories
+
 - `Finance` - Invoices, budgets, financial reports
 - `HR` - Employee records, leave requests
 - `Procurement` - Purchase orders, contracts
 - `Maintenance` - Equipment logs, repairs
 
 ## Testing
+
 ```bash
 python test_search_api.py
 ```
 
 ## Full Documentation
+
 See [SEARCH_API_GUIDE.md](SEARCH_API_GUIDE.md) for complete details.

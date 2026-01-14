@@ -9,24 +9,29 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 ## 📋 What Was Created
 
 ### 🗄️ Database Models (models.py)
+
 ✅ **User Model**
+
 - Authentication fields (email, username, hashed_password)
 - User profile (full_name, preferred_language)
 - Role flags (is_active, is_admin)
 - Bilingual support (preferred_language: en/si)
 
 ✅ **Document Model**
+
 - File metadata (filename, file_path, file_size, file_type)
 - OCR content (content, content_si, ocr_confidence)
 - ML classification (category: Finance/HR/Procurement/Maintenance)
 - Relationships (owner, tags, tasks)
 
 ✅ **Tag Model**
+
 - Bilingual labels (name, name_si)
 - Visual customization (color)
 - Many-to-many with Documents
 
 ✅ **Task Model**
+
 - Bilingual content (title_si, description_si)
 - Task management (priority, due_date, status)
 - Document linking (document_id)
@@ -37,6 +42,7 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 ## 🔌 API Routes Implemented
 
 ### 1️⃣ Authentication (/auth) - 5 routes
+
 - `POST /auth/register` - User registration
 - `POST /auth/login` - JWT token authentication
 - `GET /auth/me` - Current user profile
@@ -44,6 +50,7 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 - `POST /auth/logout` - Logout
 
 ### 2️⃣ Documents (/documents) - 7 routes
+
 - `POST /documents/` - Upload with OCR + classification
 - `GET /documents/` - List with search/filters
 - `GET /documents/{id}` - Get details
@@ -53,6 +60,7 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 - `DELETE /documents/{id}/tags/{tag_id}` - Remove tag
 
 ### 3️⃣ Tasks (/tasks) - 5 routes
+
 - `POST /tasks/` - Create task
 - `GET /tasks/` - List with filters (status, priority, overdue, upcoming)
 - `GET /tasks/{id}` - Get details
@@ -60,6 +68,7 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 - `DELETE /tasks/{id}` - Delete task
 
 ### 4️⃣ Tags (/tags) - 5 routes
+
 - `POST /tags/` - Create tag
 - `GET /tags/` - List all
 - `GET /tags/{id}` - Get details
@@ -67,6 +76,7 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 - `DELETE /tags/{id}` - Delete tag
 
 ### 5️⃣ Statistics (/stats) - 3 routes
+
 - `GET /stats/dashboard` - Overview stats
 - `GET /stats/documents` - Document analytics
 - `GET /stats/tasks` - Task analytics
@@ -78,24 +88,28 @@ All backend structure, APIs, and logic have been implemented. The UI remains unc
 ## 🛠️ Services Implemented
 
 ### auth.py - Authentication Service
+
 - Password hashing (bcrypt)
 - JWT token generation/validation
 - User authentication
 - Dependency injections (get_current_user, get_current_active_user, get_current_admin_user)
 
 ### ocr.py - OCR Service
+
 - PDF text extraction (PyPDF2)
 - Image text extraction (Tesseract)
 - Word document extraction (python-docx)
 - Bilingual support (English + Sinhala)
 
 ### classifier.py - ML Classification Service
+
 - TF-IDF vectorization
 - LinearSVC classifier
 - Model training/loading
 - Category prediction (Finance/HR/Procurement/Maintenance)
 
 ### search.py - Search Service
+
 - Full-text search
 - Category filtering
 - Date range filtering
@@ -173,16 +187,18 @@ office-mate-backend/
 
 ✅ User preferred language setting
 ✅ Sinhala fields in models:
-  - Document: content_si
-  - Task: title_si, description_si
-  - Tag: name_si
-✅ OCR with Sinhala support (tesseract)
+
+- Document: content_si
+- Task: title_si, description_si
+- Tag: name_si
+  ✅ OCR with Sinhala support (tesseract)
 
 ---
 
 ## 📊 Business Logic
 
 ✅ **Document Management**
+
 - Upload with OCR
 - Auto-categorization
 - Tag-based organization
@@ -190,6 +206,7 @@ office-mate-backend/
 - User-specific access
 
 ✅ **Task Management**
+
 - Document linking
 - Priority levels (Low/Medium/High/Urgent)
 - Status tracking (Todo/InProgress/Done)
@@ -198,6 +215,7 @@ office-mate-backend/
 - Upcoming filter
 
 ✅ **Statistics**
+
 - Document analytics
 - Task completion rates
 - Category distribution
@@ -208,6 +226,7 @@ office-mate-backend/
 ## 🚀 How to Start
 
 ### 1. Quick Start
+
 ```bash
 cd office-mate-backend
 chmod +x quickstart.sh
@@ -215,6 +234,7 @@ chmod +x quickstart.sh
 ```
 
 ### 2. Manual Start
+
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -230,6 +250,7 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 ### 3. Access API
+
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
 - **Health Check**: http://localhost:8000/
@@ -259,6 +280,7 @@ python-multipart          # File uploads
 ## 🧪 Testing Examples
 
 ### Register User
+
 ```bash
 curl -X POST http://localhost:8000/auth/register \
   -H "Content-Type: application/json" \
@@ -266,6 +288,7 @@ curl -X POST http://localhost:8000/auth/register \
 ```
 
 ### Login
+
 ```bash
 curl -X POST http://localhost:8000/auth/login \
   -F "username=demo" \
@@ -273,6 +296,7 @@ curl -X POST http://localhost:8000/auth/login \
 ```
 
 ### Upload Document
+
 ```bash
 curl -X POST http://localhost:8000/documents/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -280,6 +304,7 @@ curl -X POST http://localhost:8000/documents/ \
 ```
 
 ### Create Task
+
 ```bash
 curl -X POST http://localhost:8000/tasks/ \
   -H "Authorization: Bearer YOUR_TOKEN" \
@@ -301,6 +326,7 @@ curl -X POST http://localhost:8000/tasks/ \
 ## ✨ Key Features Summary
 
 ### For Users:
+
 - ✅ Upload documents (PDF, Word, Images)
 - ✅ Automatic text extraction (OCR)
 - ✅ Smart categorization (Finance/HR/Procurement/Maintenance)
@@ -312,6 +338,7 @@ curl -X POST http://localhost:8000/tasks/ \
 - ✅ Bilingual support (Sinhala/English)
 
 ### For Developers:
+
 - ✅ Clean FastAPI architecture
 - ✅ SQLAlchemy ORM
 - ✅ JWT authentication
@@ -327,6 +354,7 @@ curl -X POST http://localhost:8000/tasks/ \
 The backend is designed to work with the existing React frontend at `http://localhost:5173`.
 
 ### Frontend Needs to:
+
 1. Store JWT token after login (localStorage/cookie)
 2. Include token in Authorization header: `Bearer TOKEN`
 3. Handle 401 Unauthorized responses (redirect to login)
@@ -334,24 +362,25 @@ The backend is designed to work with the existing React frontend at `http://loca
 5. Parse JSON responses
 
 ### Example Frontend Code:
+
 ```javascript
 // Login
-const response = await fetch('http://localhost:8000/auth/login', {
-  method: 'POST',
-  body: new FormData(formElement)
+const response = await fetch("http://localhost:8000/auth/login", {
+  method: "POST",
+  body: new FormData(formElement),
 });
 const { access_token } = await response.json();
-localStorage.setItem('token', access_token);
+localStorage.setItem("token", access_token);
 
 // Upload Document
 const formData = new FormData();
-formData.append('file', fileInput.files[0]);
-await fetch('http://localhost:8000/documents/', {
-  method: 'POST',
+formData.append("file", fileInput.files[0]);
+await fetch("http://localhost:8000/documents/", {
+  method: "POST",
   headers: {
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
   },
-  body: formData
+  body: formData,
 });
 ```
 
@@ -360,6 +389,7 @@ await fetch('http://localhost:8000/documents/', {
 ## 🔧 Configuration
 
 ### Environment Variables (.env)
+
 ```env
 DATABASE_URL=sqlite:///./app.db
 SECRET_KEY=your-secret-key-here
@@ -368,6 +398,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=10080
 ```
 
 ### Default Admin (After Seeding)
+
 - Username: `admin`
 - Password: `admin123`
 - Email: `admin@officemate.lk`
@@ -379,12 +410,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES=10080
 ## 🎯 Next Steps (Optional Enhancements)
 
 ### Immediate:
+
 - [ ] Connect frontend to backend APIs
 - [ ] Test file uploads from UI
 - [ ] Verify authentication flow
 - [ ] Test task creation from UI
 
 ### Future:
+
 - [ ] Email notifications for tasks
 - [ ] Document versioning
 - [ ] Advanced NLP for Sinhala

@@ -1,35 +1,41 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { 
-  Upload, 
-  Search, 
-  Filter, 
-  FileText, 
-  Eye, 
-  X, 
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  Upload,
+  Search,
+  Filter,
+  FileText,
+  Eye,
+  X,
   Tag,
   Calendar,
   Loader2,
-  CheckSquare
-} from 'lucide-react';
-import { useLanguage } from '@/context/LanguageContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+  CheckSquare,
+} from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -37,10 +43,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Document, documentsApi, tasksApi, Task } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+} from "@/components/ui/table";
+import { Document, documentsApi, tasksApi, Task } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
+import { format, parseISO } from "date-fns";
 
 const Documents: React.FC = () => {
   const { t, language } = useLanguage();
@@ -49,14 +55,14 @@ const Documents: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isUploading, setIsUploading] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadResult, setUploadResult] = useState<{ 
-    category: string; 
-    tags: string[]; 
+  const [uploadResult, setUploadResult] = useState<{
+    category: string;
+    tags: string[];
     summary: string;
     extracted_text_length?: number;
     extraction_method?: string;
@@ -70,16 +76,19 @@ const Documents: React.FC = () => {
       try {
         const [docsData, tasksData] = await Promise.all([
           documentsApi.getAll(),
-          tasksApi.getAll()
+          tasksApi.getAll(),
         ]);
         setDocuments(docsData);
         setTasks(tasksData);
       } catch (error) {
-        console.error('Failed to fetch data:', error);
+        console.error("Failed to fetch data:", error);
         toast({
-          title: language === 'en' ? 'Error' : 'දෝෂයක්',
-          description: language === 'en' ? 'Failed to load documents' : 'ලේඛන පූරණය කිරීමට අසමත් විය',
-          variant: 'destructive'
+          title: language === "en" ? "Error" : "දෝෂයක්",
+          description:
+            language === "en"
+              ? "Failed to load documents"
+              : "ලේඛන පූරණය කිරීමට අසමත් විය",
+          variant: "destructive",
         });
       } finally {
         setIsLoadingData(false);
@@ -89,71 +98,87 @@ const Documents: React.FC = () => {
   }, [language, toast]);
 
   const categories = [
-    { value: 'all', label: t('category.all') },
-    { value: 'Finance', label: t('category.finance') },
-    { value: 'HR', label: t('category.hr') },
-    { value: 'Procurement', label: t('category.procurement') },
-    { value: 'Maintenance', label: t('category.maintenance') },
+    { value: "all", label: t("category.all") },
+    { value: "Finance", label: t("category.finance") },
+    { value: "HR", label: t("category.hr") },
+    { value: "Procurement", label: t("category.procurement") },
+    { value: "Maintenance", label: t("category.maintenance") },
   ];
 
   const categoryColors = {
-    Finance: 'bg-finance text-finance-foreground',
-    HR: 'bg-hr text-hr-foreground',
-    Procurement: 'bg-procurement text-procurement-foreground',
-    Maintenance: 'bg-maintenance text-maintenance-foreground',
+    Finance: "bg-finance text-finance-foreground",
+    HR: "bg-hr text-hr-foreground",
+    Procurement: "bg-procurement text-procurement-foreground",
+    Maintenance: "bg-maintenance text-maintenance-foreground",
   };
 
-  const filteredDocs = documents.filter(doc => {
-    const matchesSearch = doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = selectedCategory === 'all' || doc.category === selectedCategory;
+  const filteredDocs = documents.filter((doc) => {
+    const matchesSearch =
+      doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.tags.some((tag) =>
+        tag.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    const matchesCategory =
+      selectedCategory === "all" || doc.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const handleFileUpload = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    
-    const file = files[0];
-    setIsUploading(true);
-    setUploadResult(null);
-    
-    try {
-      // Upload to Flask API
-      const result = await documentsApi.upload(file);
-      
-      // Add to documents list
-      setDocuments(prev => [result, ...prev]);
-      
-      // Store result for display
-      setUploadResult({
-        category: result.category,
-        tags: result.tags,
-        summary: result.summary || '',
-        extracted_text_length: result.extracted_text_length,
-        extraction_method: result.extraction_method,
-        text_preview: result.text_preview
-      });
-      
-      toast({
-        title: t('docs.uploadSuccess'),
-        description: `${file.name} - ${language === 'en' ? `Classified as ${result.category}` : `${result.category} ලෙස වර්ග කරන ලදී`}`,
-      });
-    } catch (error) {
-      toast({
-        title: language === 'en' ? 'Upload Failed' : 'උඩුගත කිරීම අසාර්ථක විය',
-        description: error instanceof Error ? error.message : language === 'en' ? 'Failed to upload document' : 'ලේඛනය උඩුගත කිරීමට අසමත් විය',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  }, [toast, t, language]);
+  const handleFileUpload = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0) return;
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFileUpload(e.dataTransfer.files);
-  }, [handleFileUpload]);
+      const file = files[0];
+      setIsUploading(true);
+      setUploadResult(null);
+
+      try {
+        // Upload to Flask API
+        const result = await documentsApi.upload(file);
+
+        // Add to documents list
+        setDocuments((prev) => [result, ...prev]);
+
+        // Store result for display
+        setUploadResult({
+          category: result.category,
+          tags: result.tags,
+          summary: result.summary || "",
+          extracted_text_length: result.extracted_text_length,
+          extraction_method: result.extraction_method,
+          text_preview: result.text_preview,
+        });
+
+        toast({
+          title: t("docs.uploadSuccess"),
+          description: `${file.name} - ${language === "en" ? `Classified as ${result.category}` : `${result.category} ලෙස වර්ග කරන ලදී`}`,
+        });
+      } catch (error) {
+        toast({
+          title:
+            language === "en" ? "Upload Failed" : "උඩුගත කිරීම අසාර්ථක විය",
+          description:
+            error instanceof Error
+              ? error.message
+              : language === "en"
+                ? "Failed to upload document"
+                : "ලේඛනය උඩුගත කිරීමට අසමත් විය",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [toast, t, language]
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      handleFileUpload(e.dataTransfer.files);
+    },
+    [handleFileUpload]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -165,8 +190,8 @@ const Documents: React.FC = () => {
     setIsDragging(false);
   }, []);
 
-  const linkedTasks = selectedDoc 
-    ? tasks.filter(task => task.documentId === selectedDoc.id)
+  const linkedTasks = selectedDoc
+    ? tasks.filter((task) => task.documentId === selectedDoc.id)
     : [];
 
   if (isLoadingData) {
@@ -182,17 +207,20 @@ const Documents: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{t('docs.title')}</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            {t("docs.title")}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            {filteredDocs.length} {language === 'en' ? 'documents found' : 'ලේඛන හමු විය'}
+            {filteredDocs.length}{" "}
+            {language === "en" ? "documents found" : "ලේඛන හමු විය"}
           </p>
         </div>
       </div>
 
       {/* Upload Area */}
-      <Card 
+      <Card
         className={`card-shadow border-2 border-dashed transition-colors ${
-          isDragging ? 'border-primary bg-primary/5' : 'border-border'
+          isDragging ? "border-primary bg-primary/5" : "border-border"
         }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -206,20 +234,26 @@ const Documents: React.FC = () => {
             onChange={(e) => handleFileUpload(e.target.files)}
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
           />
-          <label 
-            htmlFor="file-upload" 
+          <label
+            htmlFor="file-upload"
             className="cursor-pointer flex flex-col items-center"
           >
             {isUploading ? (
               <>
                 <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-                <p className="text-muted-foreground">{t('docs.uploading')}</p>
+                <p className="text-muted-foreground">{t("docs.uploading")}</p>
               </>
             ) : (
               <>
-                <Upload className={`w-12 h-12 mb-4 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
-                <p className="text-foreground font-medium mb-1">{t('docs.upload')}</p>
-                <p className="text-sm text-muted-foreground">{t('docs.dropzone')}</p>
+                <Upload
+                  className={`w-12 h-12 mb-4 ${isDragging ? "text-primary" : "text-muted-foreground"}`}
+                />
+                <p className="text-foreground font-medium mb-1">
+                  {t("docs.upload")}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t("docs.dropzone")}
+                </p>
               </>
             )}
           </label>
@@ -232,21 +266,29 @@ const Documents: React.FC = () => {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              {language === 'en' ? 'AI Analysis Results' : 'AI විශ්ලේෂණ ප්‍රතිඵල'}
+              {language === "en"
+                ? "AI Analysis Results"
+                : "AI විශ්ලේෂණ ප්‍රතිඵල"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-2">
-                {language === 'en' ? 'Category' : 'වර්ගය'}
+                {language === "en" ? "Category" : "වර්ගය"}
               </p>
-              <Badge className={categoryColors[uploadResult.category as keyof typeof categoryColors]}>
+              <Badge
+                className={
+                  categoryColors[
+                    uploadResult.category as keyof typeof categoryColors
+                  ]
+                }
+              >
                 {uploadResult.category}
               </Badge>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-2">
-                {language === 'en' ? 'Tags' : 'ටැග්'}
+                {language === "en" ? "Tags" : "ටැග්"}
               </p>
               <div className="flex flex-wrap gap-2">
                 {uploadResult.tags.map((tag, idx) => (
@@ -260,39 +302,57 @@ const Documents: React.FC = () => {
             {uploadResult.summary && (
               <div>
                 <p className="text-sm font-medium text-muted-foreground mb-2">
-                  {language === 'en' ? 'Summary' : 'සාරාංශය'}
+                  {language === "en" ? "Summary" : "සාරාංශය"}
                 </p>
                 <p className="text-sm text-foreground leading-relaxed">
                   {uploadResult.summary}
                 </p>
               </div>
             )}
-            
+
             {/* OCR Extraction Details */}
             {uploadResult.extracted_text_length !== undefined && (
               <div className="border-t pt-4">
                 <p className="text-sm font-medium text-muted-foreground mb-2">
-                  {language === 'en' ? 'Extraction Details' : 'උපුටා ගැනීමේ විස්තර'}
+                  {language === "en"
+                    ? "Extraction Details"
+                    : "උපුටා ගැනීමේ විස්තර"}
                 </p>
                 <div className="space-y-1 text-sm">
                   <p>
-                    <span className="text-muted-foreground">{language === 'en' ? 'Method:' : 'ක්‍රමය:'}</span>{' '}
+                    <span className="text-muted-foreground">
+                      {language === "en" ? "Method:" : "ක්‍රමය:"}
+                    </span>{" "}
                     <Badge variant="outline" className="ml-2">
-                      {uploadResult.extraction_method?.includes('jpeg') || uploadResult.extraction_method?.includes('png') 
-                        ? (language === 'en' ? 'OCR (Image)' : 'OCR (රූපය)') 
-                        : (language === 'en' ? 'Direct (Document)' : 'සෘජු (ලේඛනය)')}
+                      {uploadResult.extraction_method?.includes("jpeg") ||
+                      uploadResult.extraction_method?.includes("png")
+                        ? language === "en"
+                          ? "OCR (Image)"
+                          : "OCR (රූපය)"
+                        : language === "en"
+                          ? "Direct (Document)"
+                          : "සෘජු (ලේඛනය)"}
                     </Badge>
                   </p>
                   <p>
-                    <span className="text-muted-foreground">{language === 'en' ? 'Text Extracted:' : 'පෙළ උපුටා ගන්නා ලදී:'}</span>{' '}
-                    <span className="font-medium">{uploadResult.extracted_text_length} {language === 'en' ? 'characters' : 'අක්ෂර'}</span>
+                    <span className="text-muted-foreground">
+                      {language === "en"
+                        ? "Text Extracted:"
+                        : "පෙළ උපුටා ගන්නා ලදී:"}
+                    </span>{" "}
+                    <span className="font-medium">
+                      {uploadResult.extracted_text_length}{" "}
+                      {language === "en" ? "characters" : "අක්ෂර"}
+                    </span>
                   </p>
                 </div>
-                
+
                 {uploadResult.text_preview && (
                   <div className="mt-3">
                     <p className="text-sm font-medium text-muted-foreground mb-2">
-                      {language === 'en' ? 'Extracted Text Preview:' : 'උපුටා ගත් පෙළ පෙරදසුන:'}
+                      {language === "en"
+                        ? "Extracted Text Preview:"
+                        : "උපුටා ගත් පෙළ පෙරදසුන:"}
                     </p>
                     <div className="bg-muted/50 p-3 rounded text-xs font-mono text-foreground max-h-32 overflow-y-auto">
                       {uploadResult.text_preview}
@@ -310,7 +370,7 @@ const Documents: React.FC = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
           <Input
-            placeholder={t('docs.search')}
+            placeholder={t("docs.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -319,7 +379,7 @@ const Documents: React.FC = () => {
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-full sm:w-48">
             <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder={t('docs.filter')} />
+            <SelectValue placeholder={t("docs.filter")} />
           </SelectTrigger>
           <SelectContent>
             {categories.map((cat) => (
@@ -337,18 +397,29 @@ const Documents: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('docs.name')}</TableHead>
-                <TableHead className="hidden sm:table-cell">{t('docs.category')}</TableHead>
-                <TableHead className="hidden md:table-cell">{t('docs.tags')}</TableHead>
-                <TableHead className="hidden lg:table-cell">{t('docs.date')}</TableHead>
-                <TableHead className="text-right">{t('docs.actions')}</TableHead>
+                <TableHead>{t("docs.name")}</TableHead>
+                <TableHead className="hidden sm:table-cell">
+                  {t("docs.category")}
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  {t("docs.tags")}
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  {t("docs.date")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("docs.actions")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredDocs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    {t('docs.noResults')}
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    {t("docs.noResults")}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -356,7 +427,9 @@ const Documents: React.FC = () => {
                   <TableRow key={doc.id} className="group">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${categoryColors[doc.category]}`}>
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center ${categoryColors[doc.category]}`}
+                        >
                           <FileText className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
@@ -377,23 +450,29 @@ const Documents: React.FC = () => {
                     <TableCell className="hidden md:table-cell">
                       <div className="flex gap-1 flex-wrap">
                         {doc.tags.slice(0, 2).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
+                          <Badge
+                            key={tag}
+                            variant="secondary"
+                            className="text-xs"
+                          >
                             {tag}
                           </Badge>
                         ))}
                       </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-muted-foreground">
-                      {format(parseISO(doc.createdAt), 'MMM dd, yyyy')}
+                      {format(parseISO(doc.createdAt), "MMM dd, yyyy")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => setSelectedDoc(doc)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">{t('docs.view')}</span>
+                        <span className="hidden sm:inline">
+                          {t("docs.view")}
+                        </span>
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -411,14 +490,18 @@ const Documents: React.FC = () => {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${categoryColors[selectedDoc.category]}`}>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${categoryColors[selectedDoc.category]}`}
+                  >
                     <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <DialogTitle className="text-xl">{selectedDoc.filename}</DialogTitle>
+                    <DialogTitle className="text-xl">
+                      {selectedDoc.filename}
+                    </DialogTitle>
                     <DialogDescription className="flex items-center gap-2 mt-1">
                       <Calendar className="w-4 h-4" />
-                      {format(parseISO(selectedDoc.createdAt), 'MMMM dd, yyyy')}
+                      {format(parseISO(selectedDoc.createdAt), "MMMM dd, yyyy")}
                     </DialogDescription>
                   </div>
                 </div>
@@ -443,14 +526,14 @@ const Documents: React.FC = () => {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      {t('docs.summary')}
+                      {t("docs.summary")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {language === 'en' 
-                        ? `This ${selectedDoc.category.toLowerCase()} document contains important information related to ${selectedDoc.tags.join(' and ')}. The AI has analyzed the content and extracted key data points for quick reference. Review the linked tasks below for action items.`
-                        : `මෙම ${selectedDoc.category} ලේඛනයේ ${selectedDoc.tags.join(' සහ ')} සම්බන්ධ වැදගත් තොරතුරු අඩංගු වේ. AI විසින් අන්තර්ගතය විශ්ලේෂණය කර ඉක්මන් යොමුව සඳහා ප්‍රධාන දත්ත කරුණු උපුටා ගෙන ඇත.`}
+                      {language === "en"
+                        ? `This ${selectedDoc.category.toLowerCase()} document contains important information related to ${selectedDoc.tags.join(" and ")}. The AI has analyzed the content and extracted key data points for quick reference. Review the linked tasks below for action items.`
+                        : `මෙම ${selectedDoc.category} ලේඛනයේ ${selectedDoc.tags.join(" සහ ")} සම්බන්ධ වැදගත් තොරතුරු අඩංගු වේ. AI විසින් අන්තර්ගතය විශ්ලේෂණය කර ඉක්මන් යොමුව සඳහා ප්‍රධාන දත්ත කරුණු උපුටා ගෙන ඇත.`}
                     </p>
                   </CardContent>
                 </Card>
@@ -460,37 +543,55 @@ const Documents: React.FC = () => {
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                       <CheckSquare className="w-4 h-4" />
-                      {t('docs.linkedTasks')} ({linkedTasks.length})
+                      {t("docs.linkedTasks")} ({linkedTasks.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {linkedTasks.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        {language === 'en' ? 'No tasks linked to this document' : 'මෙම ලේඛනයට සම්බන්ධ කාර්යයන් නොමැත'}
+                        {language === "en"
+                          ? "No tasks linked to this document"
+                          : "මෙම ලේඛනයට සම්බන්ධ කාර්යයන් නොමැත"}
                       </p>
                     ) : (
                       <div className="space-y-2">
                         {linkedTasks.map((task) => (
-                          <div 
-                            key={task.id} 
+                          <div
+                            key={task.id}
                             className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                           >
                             <div className="flex items-center gap-3">
-                              <CheckSquare className={`w-4 h-4 ${
-                                task.status === 'completed' ? 'text-success' : 'text-muted-foreground'
-                              }`} />
-                              <span className={`text-sm ${
-                                task.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'
-                              }`}>
+                              <CheckSquare
+                                className={`w-4 h-4 ${
+                                  task.status === "completed"
+                                    ? "text-success"
+                                    : "text-muted-foreground"
+                                }`}
+                              />
+                              <span
+                                className={`text-sm ${
+                                  task.status === "completed"
+                                    ? "line-through text-muted-foreground"
+                                    : "text-foreground"
+                                }`}
+                              >
                                 {task.title}
                               </span>
                             </div>
-                            <Badge variant={
-                              task.status === 'completed' ? 'secondary' :
-                              task.priority === 'high' ? 'destructive' : 'secondary'
-                            }>
-                              {task.status === 'completed' ? t('tasks.completed') : 
-                               task.priority === 'high' ? t('tasks.high') : t('tasks.pending')}
+                            <Badge
+                              variant={
+                                task.status === "completed"
+                                  ? "secondary"
+                                  : task.priority === "high"
+                                    ? "destructive"
+                                    : "secondary"
+                              }
+                            >
+                              {task.status === "completed"
+                                ? t("tasks.completed")
+                                : task.priority === "high"
+                                  ? t("tasks.high")
+                                  : t("tasks.pending")}
                             </Badge>
                           </div>
                         ))}

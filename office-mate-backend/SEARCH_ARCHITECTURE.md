@@ -102,9 +102,9 @@ Step 1: Start with user filter
   SELECT * FROM documents WHERE user_id = 1
 
 Step 2: Add keyword search (OR condition)
-  ... AND (text ILIKE '%invoice%' OR 
-           id IN (SELECT document_id FROM document_tags 
-                  JOIN tags ON tags.id = tag_id 
+  ... AND (text ILIKE '%invoice%' OR
+           id IN (SELECT document_id FROM document_tags
+                  JOIN tags ON tags.id = tag_id
                   WHERE name ILIKE '%invoice%'))
 
 Step 3: Add category filter
@@ -114,7 +114,7 @@ Step 4: Add date filter
   ... AND created_at >= '2024-01-01'
 
 Step 5: Relevance ordering
-  ORDER BY 
+  ORDER BY
     CASE WHEN tag_name ILIKE '%invoice%' THEN 0 ELSE 1 END,
     created_at DESC
 
@@ -215,25 +215,25 @@ Notes:
 
 ```sql
 -- Query 1: User + Category
-EXPLAIN QUERY PLAN 
-SELECT * FROM documents 
+EXPLAIN QUERY PLAN
+SELECT * FROM documents
 WHERE user_id=1 AND category='Finance';
 
 -- Plan:
 SEARCH documents USING INDEX idx_user_category (user_id=? AND category=?)
 
 -- Query 2: User + Date Range
-EXPLAIN QUERY PLAN 
-SELECT * FROM documents 
-WHERE user_id=1 
-  AND created_at >= '2024-01-01' 
+EXPLAIN QUERY PLAN
+SELECT * FROM documents
+WHERE user_id=1
+  AND created_at >= '2024-01-01'
 ORDER BY created_at DESC;
 
 -- Plan:
 SEARCH documents USING INDEX idx_user_created (user_id=? AND created_at>?)
 
 -- Query 3: Tag Search
-EXPLAIN QUERY PLAN 
+EXPLAIN QUERY PLAN
 SELECT * FROM documents d
 JOIN document_tags dt ON d.id = dt.document_id
 JOIN tags t ON t.id = dt.tag_id
@@ -260,9 +260,9 @@ Calculation:
 - Has Prev = (2 > 1) = true
 
 SQL:
-SELECT * FROM documents 
-WHERE ... 
-ORDER BY ... 
+SELECT * FROM documents
+WHERE ...
+ORDER BY ...
 LIMIT 20 OFFSET 20;
 
 Returns: Documents 21-40 (page 2 of 3)
@@ -271,7 +271,7 @@ Returns: Documents 21-40 (page 2 of 3)
 ## Error Handling Flow
 
 ```
-Request → Validate Parameters → Valid? 
+Request → Validate Parameters → Valid?
                                    |
                         ┌──────────┴──────────┐
                         NO                   YES
@@ -298,22 +298,24 @@ Request → Validate Parameters → Valid?
 // React Component
 function DocumentSearch() {
   const [filters, setFilters] = useState({
-    q: '',
-    category: '',
-    page: 1
+    q: "",
+    category: "",
+    page: 1,
   });
-  
+
   const { data, loading } = useDocumentSearch(filters);
-  
+
   return (
     <div>
-      <SearchBar onChange={q => setFilters({...filters, q})} />
-      <CategoryFilter onChange={cat => setFilters({...filters, category: cat})} />
+      <SearchBar onChange={(q) => setFilters({ ...filters, q })} />
+      <CategoryFilter
+        onChange={(cat) => setFilters({ ...filters, category: cat })}
+      />
       <DocumentList documents={data?.documents} />
-      <Pagination 
+      <Pagination
         page={data?.pagination.page}
         total={data?.pagination.pages}
-        onChange={page => setFilters({...filters, page})}
+        onChange={(page) => setFilters({ ...filters, page })}
       />
     </div>
   );
@@ -323,17 +325,17 @@ function DocumentSearch() {
 function useDocumentSearch(filters) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   useEffect(() => {
     const params = new URLSearchParams(filters);
     setLoading(true);
-    
+
     fetch(`/api/documents?${params}`)
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setData)
       .finally(() => setLoading(false));
   }, [filters]);
-  
+
   return { data, loading };
 }
 ```
