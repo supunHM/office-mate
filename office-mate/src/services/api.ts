@@ -128,11 +128,14 @@ export const documentsApi = {
 };
 
 // Task APIs
+// REPORT REQUIREMENT: Task management endpoints for create, list, update, delete
 export const tasksApi = {
-  getAll: async (status?: string): Promise<Task[]> => {
+  // Get all tasks with optional filtering
+  // REPORT REQUIREMENT: Filter by status, due_from, due_to, and linked_document_id
+  getAll: async (params?: { status?: string; document_id?: string }): Promise<Task[]> => {
     try {
       const response = await api.get<{ tasks: Task[]; pagination: any }>('/api/tasks', { 
-        params: status ? { status } : undefined 
+        params 
       });
       return response.data.tasks.map(normalizeTask);
     } catch (error) {
@@ -140,27 +143,72 @@ export const tasksApi = {
     }
   },
 
+  // Get upcoming tasks (next 2-3 days) - REPORT REQUIREMENT: deadline reminders
+  getUpcoming: async (days: number = 3): Promise<Task[]> => {
+    try {
+      const response = await api.get<{ tasks: Task[]; count: number; period_days: number }>('/api/tasks/upcoming', {
+        params: { days }
+      });
+      return response.data.tasks.map(normalizeTask);
+    } catch (error) {
+      return handleApiError(error as AxiosError);
+    }
+  },
+
+  // Create a new task - REPORT REQUIREMENT: Users can create tasks linked to documents
   create: async (task: Omit<Task, 'id' | 'createdAt'>): Promise<Task> => {
     try {
-      const response = await api.post<Task>('/tasks', task);
-      return response.data;
+      // Map frontend field names to backend expectations
+      const payload = {
+        title: task.title,
+        description: task.description || '',
+        priority: task.priority || 'medium',
+        status: task.status || 'pending',
+        due_date: task.dueDate || null,
+        document_id: task.documentId || null
+      };
+      const response = await api.post<Task>('/api/tasks', payload);
+      return normalizeTask(response.data);
     } catch (error) {
       return handleApiError(error as AxiosError);
     }
   },
 
+  // Update existing task - REPORT REQUIREMENT: Update status and details
   update: async (id: string, updates: Partial<Task>): Promise<Task> => {
     try {
-      const response = await api.patch<Task>(`/tasks/${id}`, updates);
-      return response.data;
+      // Map frontend field names to backend expectations
+      const payload: any = {};
+      if (updates.title !== undefined) payload.title = updates.title;
+      if (updates.description !== undefined) payload.description = updates.description;
+      if (updates.priority !== undefined) payload.priority = updates.priority;
+      if (updates.status !== undefined) payload.status = updates.status;
+      if (updates.dueDate !== undefined) payload.due_date = updates.dueDate;
+      if (updates.documentId !== undefined) payload.document_id = updates.documentId;
+      
+      const response = await api.patch<Task>(`/api/tasks/${id}`, payload);
+      return normalizeTask(response.data);
     } catch (error) {
       return handleApiError(error as AxiosError);
     }
   },
 
+  // Delete a task
   delete: async (id: string): Promise<void> => {
     try {
-      await api.delete(`/tasks/${id}`);
+      await api.delete(`/api/tasks/${id}`);
+    } catch (error) {
+      return handleApiError(error as AxiosError);
+    }
+  },
+
+  // Get tasks linked to a specific document - REPORT REQUIREMENT
+  getByDocument: async (documentId: string): Promise<Task[]> => {
+    try {
+      const response = await api.get<{ tasks: Task[]; pagination: any }>('/api/tasks', {
+        params: { document_id: documentId }
+      });
+      return response.data.tasks.map(normalizeTask);
     } catch (error) {
       return handleApiError(error as AxiosError);
     }

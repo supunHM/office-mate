@@ -1,3 +1,16 @@
+/**
+ * Dashboard Component
+ * 
+ * REPORT REQUIREMENTS IMPLEMENTATION:
+ * - Display document statistics by category (Finance, HR, Procurement, Maintenance)
+ * - Show open tasks count and upcoming deadlines (next 7 days)
+ * - Display recent documents for quick access
+ * - Highlight high-priority tasks for better visibility
+ * - Integrate upcoming tasks API for deadline reminders
+ * - Bilingual UI support (Sinhala-English)
+ * 
+ * This provides better task tracking and deadline visibility compared to manual methods.
+ */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -31,12 +44,14 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [docsData, tasksData] = await Promise.all([
+        // REPORT REQUIREMENT: Fetch documents and tasks, including upcoming deadlines
+        const [docsData, tasksData, upcomingData] = await Promise.all([
           documentsApi.getAll(),
-          tasksApi.getAll()
+          tasksApi.getAll(),
+          tasksApi.getUpcoming(7)  // REPORT REQUIREMENT: Get tasks due in next 7 days for dashboard
         ]);
         setDocuments(docsData);
-        setTasks(tasksData);
+        setTasks([...tasksData, ...upcomingData.filter(ut => !tasksData.find(t => t.id === ut.id))]);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {

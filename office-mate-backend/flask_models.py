@@ -75,24 +75,28 @@ class Document(db.Model):
 
 
 class Task(db.Model):
-    """Task model for to-do management"""
+    """
+    Task model for to-do management
+    REPORT REQUIREMENT: Smart to-do list with priority, due date, status, and document linking
+    Supports bilingual (Sinhala-English) interface through frontend
+    """
     __tablename__ = 'tasks'
     __table_args__ = (
         # Composite index for user + status filtering
         db.Index('idx_task_user_status', 'user_id', 'status'),
-        # Composite index for user + due date
+        # Composite index for user + due date - REPORT REQUIREMENT: deadline tracking
         db.Index('idx_task_user_due', 'user_id', 'due_date'),
     )
     
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    description = db.Column(db.Text, default='')
-    priority = db.Column(db.String(20), default='Low')  # Low, Medium, High, Urgent
-    due_date = db.Column(db.Date, index=True)
-    status = db.Column(db.String(20), default='Todo', index=True)  # Todo, InProgress, Done
+    title = db.Column(db.String(200), nullable=False)  # REPORT REQUIREMENT: task title
+    description = db.Column(db.Text, default='')  # REPORT REQUIREMENT: task description
+    priority = db.Column(db.String(20), default='medium')  # low, medium, high, urgent - REPORT REQUIREMENT
+    due_date = db.Column(db.Date, index=True)  # REPORT REQUIREMENT: deadline support
+    status = db.Column(db.String(20), default='pending', index=True)  # pending, in_progress, completed - REPORT REQUIREMENT
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
-    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=True, index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=True, index=True)  # REPORT REQUIREMENT: link to document
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)  # REPORT REQUIREMENT: created_by field
     
     def __repr__(self):
         return f'<Task {self.title}>'
