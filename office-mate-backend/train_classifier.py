@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score
 from app.services.classifier import train_classifier, save_model
 
 
-def load_csv(path="training_data.csv"):
+def load_csv(path="python train_enhanced_classifier.py.csv"):
     texts = []
     labels = []
     try:
