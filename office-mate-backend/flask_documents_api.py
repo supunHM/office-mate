@@ -17,6 +17,24 @@ import spacy
 import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+# Import enhanced classifier
+try:
+    from enhanced_classifier import classify_document_enhanced, EnhancedClassifier
+    USE_ENHANCED_CLASSIFIER = True
+    print("✓ Enhanced classifier loaded")
+except ImportError:
+    print("⚠ Enhanced classifier not available, using fallback")
+    USE_ENHANCED_CLASSIFIER = False
+
+# Import enhanced summary generator
+try:
+    from enhanced_summary import generate_enhanced_summary
+    USE_ENHANCED_SUMMARY = True
+    print("✓ Enhanced summary generator loaded")
+except ImportError:
+    print("⚠ Enhanced summary generator not available")
+    USE_ENHANCED_SUMMARY = False
+
 # Create Blueprint
 documents_bp = Blueprint('documents', __name__)
 
@@ -254,19 +272,38 @@ def preprocess_text_with_spacy(text):
 
 
 def classify_document(text):
-    """Classify document into category using ML model"""
-    if not text or not classifier or not vectorizer:
-        return fallback_classification(text)
+    """
+    Classify document using enhanced ML model with detailed analysis
+    Returns both category and detailed metrics
+    """
+    if not text or len(text.strip()) < 10:
+        return 'unknown', None
     
     try:
-        # Vectorize text
-        text_vectorized = vectorizer.transform([text])
-        # Predict category
-        category = classifier.predict(text_vectorized)[0]
-        return category
+        if USE_ENHANCED_CLASSIFIER:
+            # Use enhanced classifier with detailed metrics
+            result = classify_document_enhanced(text)
+            
+            # Log classification details
+            print(f"\n📊 Classification Details:")
+            print(f"   Category: {result['predicted_category']}")
+            print(f"   Confidence: {result.get('confidence_percentage', 'N/A')}")
+            print(f"   Confidence Level: {result.get('confidence_level', 'N/A')}")
+            print(f"   Analysis: {result.get('analysis', 'N/A')}")
+            
+            return result['predicted_category'], result
+        else:
+            # Fallback to simple classification
+            if not classifier or not vectorizer:
+                return fallback_classification(text), None
+            
+            text_vectorized = vectorizer.transform([text])
+            category = classifier.predict(text_vectorized)[0]
+            return category, None
+            
     except Exception as e:
-        print(f"Classification error: {e}")
-        return fallback_classification(text)
+        print(f"❌ Classification error: {e}")
+        return fallback_classification(text), None
 
 
 def fallback_classification(text):
@@ -341,18 +378,34 @@ def extract_simple_tags(text):
     return [word for word, freq in top_words]
 
 
-def generate_summary(text, max_sentences=3):
-    """Generate a simple summary from text"""
+def generate_summary(text, category="Unknown", max_sentences=3):
+    """Generate an enhanced summary from text with point-wise analysis"""
     if not text:
-        return ""
+        return {"error": "No text provided"}
     
-    # Split into sentences
+    # Use enhanced summary generator if available
+    if USE_ENHANCED_SUMMARY:
+        try:
+            enhanced_summary = generate_enhanced_summary(text, category)
+            return enhanced_summary
+        except Exception as e:
+            print(f"Error in enhanced summary: {e}")
+            # Fall back to simple summary
+    
+    # Fallback: simple summary
     sentences = text.replace('\n', ' ').split('.')
     sentences = [s.strip() for s in sentences if s.strip()]
-    
-    # Return first N sentences
     summary_sentences = sentences[:max_sentences]
-    return '. '.join(summary_sentences) + '.' if summary_sentences else text[:200]
+    
+    return {
+        'executive_summary': '. '.join(summary_sentences) + '.' if summary_sentences else text[:200],
+        'key_points': [s.strip() for s in sentences[:3] if s.strip()],
+        'key_concepts': [],
+        'sections': {},
+        'key_entities': {},
+        'structure': 'Simple text document',
+        'confidence': 0.3
+    }
 
 
 def get_or_create_tag(tag_name):
@@ -442,16 +495,16 @@ def upload_document():
         print("Preprocessing text with spaCy...")
         preprocessed_text = preprocess_text_with_spacy(extracted_text)
         
-        # Step 3: Classify document
+        # Step 3: Classify document with enhanced metrics
         print("Classifying document...")
-        category = classify_document(preprocessed_text)
+        category, classification_details = classify_document(preprocessed_text)
         
         # Step 4: Extract tags
         print("Extracting tags...")
         tag_names = extract_tags_from_text(extracted_text)
         
-        # Step 5: Generate summary
-        summary = generate_summary(extracted_text)
+        # Step 5: Generate summary with point-wise analysis
+        summary_data = generate_summary(extracted_text, category)
         
         # Step 6: Save to database
         print("Saving to database...")
@@ -463,6 +516,11 @@ def upload_document():
             user_id=user_id
         )
         
+        # Save AI summary data if available
+        if isinstance(summary_data, dict):
+            document.summary = summary_data.get('executive_summary', '')
+            document.ai_summary_json = summary_data
+        
         # Add tags
         for tag_name in tag_names:
             if tag_name:  # Skip empty tags
@@ -472,17 +530,46 @@ def upload_document():
         db.session.add(document)
         db.session.commit()
         
-        # Step 7: Return response
+        # Step 7: Return response with enhanced summary and classification
         response_data = {
             'id': document.id,
             'category': category,
             'tags': tag_names,
-            'summary': summary,
             'filename': original_filename,
             'created_at': document.created_at.isoformat(),
             'extracted_text_length': len(extracted_text),
             'extraction_method': file_type  # Shows if it was OCR (image) or direct extraction (pdf/docx)
         }
+        
+        # Add enhanced point-wise summary (both flat format and detailed format)
+        if isinstance(summary_data, dict):
+            # For frontend compatibility: provide a flat string summary
+            executive_summary = summary_data.get('executive_summary', '')
+            response_data['summary'] = executive_summary
+            
+            # For detailed AI analysis: provide point-wise breakdown
+            response_data['ai_summary'] = {
+                'executive_summary': executive_summary,
+                'key_points': summary_data.get('key_points', []),
+                'key_concepts': summary_data.get('key_concepts', []),
+                'key_entities': summary_data.get('key_entities', {}),
+                'document_sections': summary_data.get('sections', {}),
+                'structure': summary_data.get('structure', ''),
+                'confidence': summary_data.get('confidence', 0.0)
+            }
+        
+        # Add classification details if available
+        if classification_details:
+            response_data['classification_details'] = {
+                'confidence': classification_details.get('confidence_percentage', 'N/A'),
+                'confidence_level': classification_details.get('confidence_level', 'N/A'),
+                'model_agreement': classification_details.get('models_agree', False),
+
+                'agreement_strength': classification_details.get('agreement_strength', 'N/A'),
+                'top_features': [f['feature'] for f in classification_details.get('top_features', [])[:5]],
+                'probability_ranking': classification_details.get('probability_ranking', []),
+                'analysis': classification_details.get('analysis', 'N/A')
+            }
         
         # Add first 500 characters of extracted text for preview
         if extracted_text:
@@ -582,14 +669,25 @@ def get_documents():
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
         
         # Format response
-        documents = [{
-            'id': doc.id,
-            'original_name': doc.original_name,
-            'category': doc.category,
-            'tags': [tag.name for tag in doc.tags],
-            'created_at': doc.created_at.isoformat(),
-            'text_preview': doc.text[:200] + '...' if len(doc.text) > 200 else doc.text
-        } for doc in paginated.items]
+        documents = []
+        for doc in paginated.items:
+            doc_dict = {
+                'id': doc.id,
+                'original_name': doc.original_name,
+                'filename': doc.original_name,  # For frontend compatibility
+                'category': doc.category,
+                'tags': [tag.name for tag in doc.tags],
+                'created_at': doc.created_at.isoformat(),
+                'summary': doc.summary or '',  # Use saved summary from DB
+                'text_preview': doc.text[:200] + '...' if len(doc.text) > 200 else doc.text,
+                'extracted_text_length': len(doc.text)
+            }
+            
+            # Add AI summary if available in database
+            if doc.ai_summary_json:
+                doc_dict['ai_summary'] = doc.ai_summary_json
+            
+            documents.append(doc_dict)
         
         return jsonify({
             'documents': documents,
@@ -621,15 +719,33 @@ def get_document(document_id):
     if not document:
         return jsonify({'error': 'Document not found'}), 404
     
-    return jsonify({
+    # Generate summary with point-wise analysis
+    summary_data = generate_summary(document.text, document.category) if document.text else {}
+    summary_text = summary_data.get('executive_summary', '') if isinstance(summary_data, dict) else ''
+    
+    response_data = {
         'id': document.id,
         'original_name': document.original_name,
         'category': document.category,
         'text': document.text,
         'tags': [tag.name for tag in document.tags],
-        'summary': generate_summary(document.text),
+        'summary': summary_text,
         'created_at': document.created_at.isoformat()
-    }), 200
+    }
+    
+    # Add AI summary if available
+    if isinstance(summary_data, dict):
+        response_data['ai_summary'] = {
+            'executive_summary': summary_data.get('executive_summary', ''),
+            'key_points': summary_data.get('key_points', []),
+            'key_concepts': summary_data.get('key_concepts', []),
+            'key_entities': summary_data.get('key_entities', {}),
+            'document_sections': summary_data.get('sections', {}),
+            'structure': summary_data.get('structure', ''),
+            'confidence': summary_data.get('confidence', 0.0)
+        }
+    
+    return jsonify(response_data), 200
 
 
 # Debug endpoint to test file extraction

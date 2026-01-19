@@ -63,6 +63,10 @@ class Document(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     
+    # AI Summary Fields (stored as JSON)
+    summary = db.Column(db.Text, default='')  # Executive summary string
+    ai_summary_json = db.Column(db.JSON, default={})  # Full AI summary with sections, key_points, concepts, entities
+    
     # Many-to-many relationship with tags
     tags = db.relationship('Tag', secondary=document_tags, lazy='subquery',
                           backref=db.backref('documents', lazy=True))

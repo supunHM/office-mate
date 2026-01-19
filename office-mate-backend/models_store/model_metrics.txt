@@ -1,0 +1,21 @@
+ENHANCED DOCUMENT CLASSIFIER - METRICS REPORT
+================================================================================
+Trained at: 2026-01-19T18:49:24.037791
+
+ACCURACY SCORES:
+  Training: 98.75%
+  Test:     75.00%
+  Cross-Val Mean: 78.75%
+  Cross-Val Std:  8.48%
+
+CLASSIFICATION REPORT:
+              precision    recall  f1-score   support
+
+     Finance     0.5714    0.8000    0.6667         5
+          HR     0.8000    0.8000    0.8000         5
+ Maintenance     0.8333    1.0000    0.9091         5
+ Procurement     1.0000    0.4000    0.5714         5
+
+    accuracy                         0.7500        20
+   macro avg     0.8012    0.7500    0.7368        20
+weighted avg     0.8012    0.7500    0.7368        20

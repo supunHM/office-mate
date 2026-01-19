@@ -31,6 +31,7 @@ const normalizeDocument = (doc: any): Document => ({
   ...doc,
   filename: doc.original_name || doc.filename,
   createdAt: doc.created_at || doc.createdAt,
+  summary: doc.summary || '',  // Ensure summary is present
 });
 
 // Helper to normalize task field names
@@ -42,6 +43,16 @@ const normalizeTask = (task: any): Task => ({
 });
 
 // Types
+export interface AISummary {
+  executive_summary?: string;
+  key_points?: string[];
+  key_concepts?: string[];
+  key_entities?: Record<string, string[]>;
+  document_sections?: Record<string, string>;
+  structure?: string;
+  confidence?: number;
+}
+
 export interface Document {
   id: string;
   filename?: string; // For frontend compatibility
@@ -50,8 +61,10 @@ export interface Document {
   tags: string[];
   createdAt?: string; // Frontend field
   created_at?: string; // Backend field
-  summary?: string;
+  summary?: string;  // AI-generated summary for display
+  ai_summary?: AISummary;  // Detailed point-wise analysis
   text_preview?: string;
+  extracted_text_length?: number;
 }
 
 export interface DocumentDetails extends Document {

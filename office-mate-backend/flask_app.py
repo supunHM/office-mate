@@ -24,10 +24,20 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-change-in-pr
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_UPLOAD_SIZE', 10 * 1024 * 1024))  # 10 MB default
 
 # Get CORS origins from environment
-cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:8081').split(',')
+cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:8080,http://localhost:8081').split(',')
 
-# Enable CORS for frontend
-CORS(app, origins=cors_origins, supports_credentials=True)
+# Enable CORS for frontend - strip whitespace from origins
+cors_origins = [origin.strip() for origin in cors_origins]
+
+# Print debug info
+print(f"✓ CORS Enabled for origins: {cors_origins}")
+
+# Enable CORS for frontend with all necessary headers
+CORS(app, 
+     origins=cors_origins, 
+     supports_credentials=True, 
+     allow_headers=['Content-Type', 'Authorization'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
 
 # Initialize database
 init_db(app)
@@ -44,6 +54,7 @@ def health_check():
 
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5001))
+    port = int(os.getenv('PORT', 8000))  # Default to 8000, not 5001
     debug = os.getenv('FLASK_ENV', 'development') == 'development'
+    print(f"✓ Starting Flask app on port {port}")
     app.run(debug=debug, host='0.0.0.0', port=port)

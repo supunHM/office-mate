@@ -521,22 +521,125 @@ const Documents: React.FC = () => {
                   ))}
                 </div>
 
-                {/* AI Summary */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                      {t("docs.summary")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {language === "en"
-                        ? `This ${selectedDoc.category.toLowerCase()} document contains important information related to ${selectedDoc.tags.join(" and ")}. The AI has analyzed the content and extracted key data points for quick reference. Review the linked tasks below for action items.`
-                        : `මෙම ${selectedDoc.category} ලේඛනයේ ${selectedDoc.tags.join(" සහ ")} සම්බන්ධ වැදගත් තොරතුරු අඩංගු වේ. AI විසින් අන්තර්ගතය විශ්ලේෂණය කර ඉක්මන් යොමුව සඳහා ප්‍රධාන දත්ත කරුණු උපුටා ගෙන ඇත.`}
-                    </p>
-                  </CardContent>
-                </Card>
+                {/* AI Summary - Point-Wise Analysis */}
+                {selectedDoc.summary && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        {language === "en" ? "AI Summary Analysis" : "AI සාරාංශ විශ්ලේෂණ"}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Executive Summary */}
+                      <div>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">
+                          {language === "en" ? "Executive Summary" : "විධායක සාරාංශ"}
+                        </p>
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {selectedDoc.summary.split("|").slice(0, 2).join("|").trim()}
+                        </p>
+                      </div>
+
+                      {/* Key Points */}
+                      {selectedDoc.ai_summary?.key_points && selectedDoc.ai_summary.key_points.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">
+                            {language === "en" ? "Key Points" : "ප්‍රධාන කරුණු"}
+                          </p>
+                          <ul className="space-y-1">
+                            {selectedDoc.ai_summary.key_points.slice(0, 4).map((point, idx) => (
+                              <li key={idx} className="text-xs text-foreground flex gap-2">
+                                <span className="text-primary">•</span>
+                                <span>{point.slice(0, 100)}{point.length > 100 ? "..." : ""}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Key Concepts */}
+                      {selectedDoc.ai_summary?.key_concepts && selectedDoc.ai_summary.key_concepts.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">
+                            {language === "en" ? "Key Concepts" : "ප්‍රධාන සංකල්පන"}
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {selectedDoc.ai_summary.key_concepts.slice(0, 6).map((concept, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {concept.split("\n")[0].slice(0, 30)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Document Structure */}
+                      {selectedDoc.ai_summary?.structure && (
+                        <div className="border-t pt-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            {language === "en" ? "Document Structure" : "ලේඛන ව්‍යුහය"}
+                          </p>
+                          <p className="text-xs text-foreground">{selectedDoc.ai_summary.structure}</p>
+                        </div>
+                      )}
+
+                      {/* Confidence Score */}
+                      {selectedDoc.ai_summary?.confidence && (
+                        <div className="border-t pt-3">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">
+                            {language === "en" ? "Analysis Quality" : "විශ්ලේෂණ ගුණාත්මකතා"}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-muted rounded-full h-2">
+                              <div
+                                className="bg-primary h-2 rounded-full transition-all"
+                                style={{ width: `${selectedDoc.ai_summary.confidence * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-medium">
+                              {(selectedDoc.ai_summary.confidence * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Document Sections */}
+                {selectedDoc.ai_summary?.document_sections && 
+                 Object.keys(selectedDoc.ai_summary.document_sections).length > 0 && (
+                  <Card className="border-l-4 border-l-blue-500">
+                    <CardHeader>
+                      <CardTitle className="text-base">
+                        {language === "en" ? "Document Sections" : "ලේඛන කොටස්"}
+                      </CardTitle>
+                      <CardDescription>
+                        {language === "en" 
+                          ? `${Object.keys(selectedDoc.ai_summary.document_sections).length} sections identified`
+                          : `${Object.keys(selectedDoc.ai_summary.document_sections).length} කොටස් හඳුනාගෙන ඇත`
+                        }
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {Object.entries(selectedDoc.ai_summary.document_sections).map(([section, content]) => (
+                        <div key={section} className="bg-muted/50 p-3 rounded-lg border border-border/50">
+                          <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-primary" />
+                            {section}
+                          </p>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                            {typeof content === 'string' 
+                              ? content.replace(/\n/g, ' ').substring(0, 250) + (content.length > 250 ? '...' : '')
+                              : JSON.stringify(content).substring(0, 250) + '...'
+                            }
+                          </p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Linked Tasks */}
                 <Card>
