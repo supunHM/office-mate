@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
         setTasks([
           ...tasksData,
           ...upcomingData.filter(
-            (ut) => !tasksData.find((t) => t.id === ut.id)
+            (ut) => !tasksData.find((t) => t.id === ut.id),
           ),
         ]);
       } catch (error) {
