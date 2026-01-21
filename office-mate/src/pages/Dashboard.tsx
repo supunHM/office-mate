@@ -225,7 +225,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => navigate(`/documents?id=${doc.id}`)}
               >
                 <div
-                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${categoryColors[doc.category].split(" ")[0]}`}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center ${categoryColors[doc.category as keyof typeof categoryColors]?.split(" ")[0] || "bg-gray-500"}`}
                 >
                   <FileText className="w-5 h-5 text-white" />
                 </div>
